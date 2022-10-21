@@ -2,6 +2,7 @@ SOURCE = src
 OBJECT = object
 BUILD = build
 LOG = log
+DATA = data
 
 OBJECTS = $(OBJECT)/mongoose.o $(OBJECT)/main.o
 LIBRARIES = -lsqlite3 -ljansson
@@ -21,6 +22,7 @@ init:
 	mkdir $(BUILD)
 	mkdir $(OBJECT)
 	mkdir $(LOG)
+	mkdir $(DATA)
 
 .PHONY: clean
 clean:
@@ -28,4 +30,4 @@ clean:
 
 .PHONY: clean-all
 clean-all:
-	rm -rf $(OBJECTS) $(TARGET) $(LOG)/*
+	rm -rf $(OBJECTS) $(TARGET) $(LOG)/* $(DATA)/*
