@@ -7,8 +7,7 @@ static const char *s_http_addr = "http://0.0.0.0:8000";  // HTTP port
 // static const char *s_https_addr = "https://0.0.0.0:8443";  // HTTPS port
 static const char *s_root_dir = ".";
 
-static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data)
-{
+static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
     // setting for HTTPS is unable.
     // if (ev == MG_EV_ACCEPT && fn_data != NULL) {
     //     struct mg_tls_opts opts = {
@@ -38,12 +37,10 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data)
                                      mg_straddr(&t->rem, rem, sizeof(rem)));
             }
             mg_http_printf_chunk(c, "");  // Don't forget the last empty chunk
-        }
-        else if (mg_http_match_uri(hm, "/api/f2/*")) {
+        } else if (mg_http_match_uri(hm, "/api/f2/*")) {
             mg_http_reply(c, 200, "", "{\"result\": \"%.*s\"}\n",
                           (int)hm->uri.len, hm->uri.ptr);
-        }
-        else {
+        } else {
             struct mg_http_serve_opts opts = {.root_dir = s_root_dir};
             mg_http_serve_dir(c, ev_data, &opts);
         }
@@ -51,8 +48,7 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data)
     (void)fn_data;
 }
 
-int main(void)
-{
+int main(void) {
     struct mg_mgr mgr;  // Event manager
 
     // Set log level
