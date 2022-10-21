@@ -1,6 +1,7 @@
 SOURCE = src
 OBJECT = object
 BUILD = build
+LOG = log
 
 OBJECTS = $(OBJECT)/mongoose.o $(OBJECT)/main.o
 
@@ -18,7 +19,12 @@ $(OBJECT)/%.o: $(SOURCE)/%.c
 init:
 	mkdir $(BUILD)
 	mkdir $(OBJECT)
+	mkdir $(LOG)
 
 .PHONY: clean
 clean:
 	rm -rf $(OBJECTS) $(TARGET)
+
+.PHONY: clean-all
+clean-all:
+	rm -rf $(OBJECTS) $(TARGET) $(LOG)/*
