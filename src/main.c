@@ -1,9 +1,7 @@
 #include <jansson.h>
 
 #include "mongoose.h"
-
-#define DEBUG 1
-#define VERBOSE 0
+#include "util.h"
 
 static const char *s_http_addr = "http://0.0.0.0:8000";  // HTTP port
 // static const char *s_https_addr = "https://0.0.0.0:8443";  // HTTPS port
