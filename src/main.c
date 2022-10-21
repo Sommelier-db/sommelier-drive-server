@@ -1,5 +1,4 @@
-// Copyright (c) 2020 Cesanta Software Limited
-// All rights reserved
+#include <jansson.h>
 
 #include "mongoose.h"
 
@@ -10,8 +9,6 @@ static const char *s_http_addr = "http://0.0.0.0:8000";  // HTTP port
 // static const char *s_https_addr = "https://0.0.0.0:8443";  // HTTPS port
 static const char *s_root_dir = ".";
 
-// We use the same event handler function for HTTP and HTTPS connections
-// fn_data is NULL for plain HTTP, and non-NULL for HTTPS
 static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data)
 {
     // setting for HTTPS is unable.

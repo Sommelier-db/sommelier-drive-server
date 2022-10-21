@@ -4,6 +4,7 @@ BUILD = build
 LOG = log
 
 OBJECTS = $(OBJECT)/mongoose.o $(OBJECT)/main.o
+LIBRARIES = -lsqlite3 -ljansson
 
 TARGET = $(BUILD)/main
 CC = gcc
@@ -11,7 +12,7 @@ CC = gcc
 CFLAGS = -Wall -I./include
 
 $(TARGET): $(OBJECTS)
-	$(CC) -o $(TARGET) $^
+	$(CC) -o $(TARGET) $^ $(LIBRARIES)
 
 $(OBJECT)/%.o: $(SOURCE)/%.c
 	$(CC) $(CFLAGS) -o $@ -c $<
