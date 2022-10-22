@@ -1,2 +1,7 @@
 #define DEBUG 1
 #define VERBOSE 0
+
+#define VECTOR_MAX_SIZE_DEFAULT 16
+#define VECTOR_EXTEND_RATE 2
+
+#define SQL_SCRIPT_MAX_SIZE 255
