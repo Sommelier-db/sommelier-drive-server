@@ -1,1 +1,482 @@
 #include "entity.h"
+
+// User API
+
+User *initialize_user(uint64_t id, const char *pkd, const char *pkk) {
+    User *user = INITIALIZE(User);
+
+    if (user == NULL) {
+        errordebug("Memory allocation is failed. - User");
+        exit(1);
+    }
+
+    user->id = id;
+
+    // copy DataPublicKey
+    user->data_public_key = INITIALIZE_STRING(MAX_SIZE_PKE_PK);
+
+    if (user->data_public_key == NULL) {
+        errordebug("Memory allocation is failed. - User::data_public_key");
+        exit(1);
+    }
+
+    strcpy(user->data_public_key, pkd);
+
+    // copy KeywordPublicKey
+    user->keyword_public_key = INITIALIZE_STRING(MAX_SIZE_PKSE_PK);
+
+    if (user->keyword_public_key == NULL) {
+        errordebug("Memory allocation is failed. - User::keyword_public_key");
+        exit(1);
+    }
+
+    strcpy(user->keyword_public_key, pkk);
+
+    return user;
+}
+
+void finalize_user(User *user) {
+    free(user->data_public_key);
+    free(user->keyword_public_key);
+    free(user);
+}
+
+void set_user(User *user, const char *pkd, const char *pkk) {
+    if (pkd != NULL) {
+        strcpy(user->data_public_key, pkd);
+    }
+    if (pkk != NULL) {
+        strcpy(user->keyword_public_key, pkk);
+    }
+}
+
+uint64_t increment_nonce(User *user) { return ++user->nonce; }
+
+void decode_json_user(User *user, json_t *json) {
+    if (json_object_set(json, "id", json_integer(user->id)) < 0) {
+        errordebug("Setting JSON is failed. - User::id");
+        exit(1);
+    }
+
+    if (json_object_set(json, "data_public_key",
+                        json_string(user->data_public_key)) < 0) {
+        errordebug("Setting JSON is failed. - User::data_public_key");
+        exit(1);
+    }
+
+    if (json_object_set(json, "keyword_public_key",
+                        json_string(user->keyword_public_key)) < 0) {
+        errordebug("Setting JSON is failed. - User::keyword_public_key");
+        exit(1);
+    }
+}
+
+// Path API
+
+Path *initialize_path(uint64_t id, uint64_t user_id, const char *ph,
+                      const char *ctd, const char *ctk) {
+    printf("<ph: %s, ctd: %s, ctk: %s>\n", ph, ctd, ctk);
+
+    Path *path = INITIALIZE(Path);
+
+    if (path == NULL) {
+        errordebug("Memory allocation is failed. - Path");
+        exit(1);
+    }
+
+    path->id = id;
+    path->user_id = user_id;
+
+    // copy PermissionHash
+    path->permission_hash = INITIALIZE_STRING(MAX_SIZE_HASH);
+
+    if (path->permission_hash == NULL) {
+        errordebug("Memory allocation is failed. - Path::permission_hash");
+        exit(1);
+    }
+
+    strcpy(path->permission_hash, ph);
+
+    // copy DataCipherText
+    path->data_cipher_text = INITIALIZE_STRING(MAX_SIZE_PKE_CT);
+
+    if (path->data_cipher_text == NULL) {
+        errordebug("Memory allocation is failed. - Path::data_cipher_text");
+        exit(1);
+    }
+
+    strcpy(path->data_cipher_text, ctd);
+
+    printf("debug - %p, %s\n", path->data_cipher_text, path->data_cipher_text);
+
+    // copy KeywordCipherText
+    path->keyword_cipher_text = INITIALIZE_STRING(MAX_SIZE_PKSE_CT);
+
+    if (path->keyword_cipher_text == NULL) {
+        errordebug("Memory allocation is failed. - Path::keyword_cipher_text");
+        exit(1);
+    }
+
+    strcpy(path->keyword_cipher_text, ctk);
+
+    printf("debug - %p, %s\n", path->permission_hash, path->permission_hash);
+    printf("debug - %p, %s\n", path->data_cipher_text, path->data_cipher_text);
+    printf("debug - %p, %s\n", path->keyword_cipher_text,
+           path->keyword_cipher_text);
+
+    return path;
+}
+
+void finalize_path(Path *path) {
+    free(path->permission_hash);
+    free(path->data_cipher_text);
+    free(path->keyword_cipher_text);
+    free(path);
+}
+
+void set_path(Path *path, uint64_t user_id, const char *ph, const char *ctd,
+              const char *ctk) {
+    if (user_id != path->user_id) {
+        path->user_id = user_id;
+    }
+    if (ph != NULL) {
+        strcpy(path->permission_hash, ph);
+    }
+    if (ctd != NULL) {
+        strcpy(path->data_cipher_text, ctd);
+    }
+    if (ctk != NULL) {
+        strcpy(path->keyword_cipher_text, ctk);
+    }
+}
+
+void decode_json_path(Path *path, json_t *json) {
+    if (json_object_set(json, "id", json_integer(path->id)) < 0) {
+        errordebug("Setting JSON is failed. - Path::id");
+        exit(1);
+    }
+
+    if (json_object_set(json, "user_id", json_integer(path->user_id)) < 0) {
+        errordebug("Setting JSON is failed. - Path::user_id");
+        exit(1);
+    }
+
+    if (json_object_set(json, "permission_hash",
+                        json_string(path->permission_hash)) < 0) {
+        errordebug("Setting JSON is failed. - Path::permission_hash");
+        exit(1);
+    }
+
+    if (json_object_set(json, "data_cipher_text",
+                        json_string(path->data_cipher_text)) < 0) {
+        errordebug("Setting JSON is failed.");
+        exit(1);
+    }
+
+    if (json_object_set(json, "keyword_cipher_text",
+                        json_string(path->keyword_cipher_text)) < 0) {
+        errordebug("Setting JSON is failed. - Path::keyword_cipher_text");
+        exit(1);
+    }
+}
+
+// PathVector API
+
+PathVector *initialize_path_vector() {
+    PathVector *vec = INITIALIZE(PathVector);
+
+    if (vec == NULL) {
+        errordebug("Memory allocation is failed. - PathVector");
+        exit(1);
+    }
+
+    vec->max_size = VECTOR_MAX_SIZE_DEFAULT;
+    vec->length = 0;
+    vec->buf = INITIALIZE_SIZE(Path, VECTOR_MAX_SIZE_DEFAULT);
+
+    if (vec->buf == NULL) {
+        errordebug("Memory allocation is failed. - PathVector::buf");
+        exit(1);
+    }
+
+    return vec;
+}
+
+void finalize_path_vector(PathVector *vec) {
+    free(vec->buf);
+    free(vec);
+}
+
+size_t push_path_vector(PathVector *vec, Path *path) {
+    if (vec->length == vec->max_size) {
+        resize_path_vector(vec);
+    }
+
+    set_path(&vec->buf[vec->length++], path->user_id, path->permission_hash,
+             path->data_cipher_text, path->keyword_cipher_text);
+
+    return vec->length;
+}
+
+size_t resize_path_vector(PathVector *vec) {
+    size_t new_size = VECTOR_EXTEND_RATE * vec->max_size;
+    vec->max_size = new_size;
+    vec->buf = (Path *)realloc(vec->buf, new_size * refsizeof(Path));
+
+    if (vec->buf == NULL) {
+        errordebug("Memory re-allocation is failed. - PathVector::buf");
+        exit(1);
+    }
+
+    return new_size;
+}
+
+// SharedKey API
+
+SharedKey *initialize_shared_key(uint64_t id, uint64_t path_id,
+                                 const char *ctsk) {
+    SharedKey *shared_key = INITIALIZE(SharedKey);
+
+    if (shared_key == NULL) {
+        errordebug("Memory allocation is failed. - SharedKey");
+        exit(1);
+    }
+
+    shared_key->id = id;
+    shared_key->path_id = path_id;
+
+    // copy SharedKeyCipherText
+    shared_key->shared_key_cipher_text = INITIALIZE_STRING(MAX_SIZE_PKE_CT);
+
+    if (shared_key->shared_key_cipher_text == NULL) {
+        errordebug(
+            "Memory allocation is failed. - "
+            "SharedKey::shared_key_cipher_text");
+        exit(1);
+    }
+
+    strcpy(shared_key->shared_key_cipher_text, ctsk);
+
+    return shared_key;
+}
+
+void finalize_shared_key(SharedKey *key) {
+    free(key->shared_key_cipher_text);
+    free(key);
+}
+
+void set_shared_key(SharedKey *key, uint64_t path_id, const char *ctsk) {
+    if (path_id != key->path_id) {
+        key->path_id = path_id;
+    }
+    if (ctsk != NULL) {
+        strcpy(key->shared_key_cipher_text, ctsk);
+    }
+}
+
+void decode_json_shared_key(SharedKey *sk, json_t *json) {
+    if (json_object_set(json, "id", json_integer(sk->id)) < 0) {
+        errordebug("Setting JSON is failed. - SharedKey::id");
+        exit(1);
+    }
+
+    if (json_object_set(json, "path_id", json_integer(sk->path_id)) < 0) {
+        errordebug("Setting JSON is failed. - SharedKey::path_id");
+        exit(1);
+    }
+
+    if (json_object_set(json, "shared_key_cipher_text",
+                        json_string(sk->shared_key_cipher_text)) < 0) {
+        errordebug(
+            "Setting JSON is failed. - SharedKey::shared_key_cipher_text");
+        exit(1);
+    }
+}
+
+// Content API
+
+Content *initialize_content(uint64_t id, const char *skh, const char *ctc) {
+    Content *content = INITIALIZE(Content);
+
+    if (content == NULL) {
+        errordebug("Memory allocation is failed. - Content");
+        exit(1);
+    }
+
+    content->id = id;
+
+    // copy SharedKeyHash
+    content->shared_key_hash = INITIALIZE_STRING(MAX_SIZE_HASH);
+
+    if (content->shared_key_hash == NULL) {
+        errordebug("Memory allocation is failed. - Content::shared_key_hash");
+        exit(1);
+    }
+
+    strcpy(content->shared_key_hash, skh);
+
+    // copy ContentCipherText
+    content->content_cipher_text = INITIALIZE_STRING(MAX_SIZE_PKE_CT);
+
+    if (content->content_cipher_text == NULL) {
+        errordebug(
+            "Memory allocation is failed. - Content::content_cipher_text");
+        exit(1);
+    }
+
+    strcpy(content->content_cipher_text, ctc);
+
+    return content;
+}
+
+void finalize_content(Content *content) {
+    free(content->shared_key_hash);
+    free(content->content_cipher_text);
+    free(content);
+}
+
+void set_content(Content *content, const char *skh, const char *ctc) {
+    if (skh != NULL) {
+        strcpy(content->shared_key_hash, skh);
+    }
+    if (ctc != NULL) {
+        strcpy(content->content_cipher_text, ctc);
+    }
+}
+
+void decode_json_content(Content *c, json_t *json) {
+    if (json_object_set(json, "id", json_integer(c->id)) < 0) {
+        errordebug("Setting JSON is failed. - Content::id");
+        exit(1);
+    }
+
+    if (json_object_set(json, "shared_key_hash",
+                        json_string(c->shared_key_hash)) < 0) {
+        errordebug("Setting JSON is failed. - Content::shared_key_hash");
+        exit(1);
+    }
+
+    if (json_object_set(json, "content_cipher_text",
+                        json_string(c->content_cipher_text)) < 0) {
+        errordebug("Setting JSON is failed. - Content::content_cipher_text");
+        exit(1);
+    }
+}
+
+// ContetnVector API
+
+ContentVector *initialize_content_vector() {
+    ContentVector *vec = INITIALIZE(ContentVector);
+
+    if (vec == NULL) {
+        errordebug("Memory allocation is failed. - ContentVector");
+        exit(1);
+    }
+
+    vec->max_size = VECTOR_MAX_SIZE_DEFAULT;
+    vec->length = 0;
+    vec->buf = INITIALIZE_SIZE(Content, VECTOR_MAX_SIZE_DEFAULT);
+
+    if (vec->buf == NULL) {
+        errordebug("Memory allocation is failed. - ContentVector::buf");
+        exit(1);
+    }
+
+    return vec;
+}
+
+void finalize_content_vector(ContentVector *vec) {
+    free(vec->buf);
+    free(vec);
+}
+
+size_t push_content_vector(ContentVector *vec, Content *content) {
+    if (vec->length == vec->max_size) {
+        resize_content_vector(vec);
+    }
+
+    set_content(&vec->buf[vec->length++], content->shared_key_hash,
+                content->content_cipher_text);
+
+    return vec->length;
+}
+
+size_t resize_content_vector(ContentVector *vec) {
+    size_t new_size = VECTOR_EXTEND_RATE * vec->max_size;
+    vec->max_size = new_size;
+    vec->buf = (Content *)realloc(vec->buf, new_size * refsizeof(Content));
+
+    if (vec->buf == NULL) {
+        errordebug("Memory re-allocation is failed. - ContentVector::buf");
+        exit(1);
+    }
+
+    return new_size;
+}
+
+// WritePermission API
+
+WritePermission *initialize_write_permission(uint64_t id, uint64_t path_id,
+                                             uint64_t user_id) {
+    WritePermission *wp = INITIALIZE(WritePermission);
+
+    if (wp == NULL) {
+        errordebug("Memory allocation is failed. - WritePermission");
+        exit(1);
+    }
+
+    wp->id = id;
+    wp->path_id = path_id;
+    wp->user_id = user_id;
+
+    return wp;
+}
+
+void finalize_write_permission(WritePermission *wp) { free(wp); }
+
+void set_write_permission(WritePermission *wp, uint64_t path_id,
+                          uint64_t user_id) {
+    if (path_id != wp->path_id) {
+        wp->path_id = path_id;
+    }
+    if (user_id != wp->user_id) {
+        wp->user_id = user_id;
+    }
+}
+
+void decode_json_write_permission(WritePermission *wp, json_t *json) {
+    if (json_object_set(json, "id", json_integer(wp->id)) < 0) {
+        errordebug("Setting JSON is failed. - WritePermission::id");
+        exit(1);
+    }
+
+    if (json_object_set(json, "path_id", json_integer(wp->path_id)) < 0) {
+        errordebug("Setting JSON is failed. - WritePermission::path_id");
+        exit(1);
+    }
+
+    if (json_object_set(json, "user_id", json_integer(wp->user_id)) < 0) {
+        errordebug("Setting JSON is failed. - WritePermission::user_id");
+        exit(1);
+    }
+}
+
+// debug API
+
+#if DEBUG
+
+void debug_user(User *);
+
+void debug_path(Path *);
+
+void debug_shared_key(SharedKey *);
+
+void debug_content(Content *);
+
+void debug_write_permission(WritePermission *);
+
+void debug_path_vector(PathVector *);
+
+void debug_content_vector(ContentVector *);
+
+#endif
