@@ -32,10 +32,10 @@ void test_entity_user() {
     printf("test_entity_user: User API usage.\n");
 
     User *u = initialize_user(1, "pkd01", "pkk01");
-    json_t *j = json_loads("{}", 0, NULL);
+    json_t *j;
     char *dumped;
 
-    decode_json_user(u, j);
+    j = decode_json_user(u);
     dumped = json_dumps(j, 0);
     if (dumped != NULL) {
         printf("user json - %s\n", dumped);
@@ -43,10 +43,11 @@ void test_entity_user() {
         errordebug("dumped is NULL.");
     }
     free(dumped);
+    free(j);
 
     set_user(u, "pkdx1", "pkkx1");
 
-    decode_json_user(u, j);
+    j = decode_json_user(u);
     dumped = json_dumps(j, 0);
     if (dumped != NULL) {
         printf("user json - %s\n", dumped);
@@ -54,6 +55,7 @@ void test_entity_user() {
         errordebug("dumped is NULL.");
     }
     free(dumped);
+    free(j);
 
     finalize_user(u);
 }
@@ -62,10 +64,10 @@ void test_entity_path() {
     printf("test_entity_path: Path API usage.\n");
 
     Path *p = initialize_path(111, 222, "ph111", "dct111", "kct111");
-    json_t *j = json_loads("{}", 0, NULL);
+    json_t *j;
     char *dumped;
 
-    decode_json_path(p, j);
+    j = decode_json_path(p);
     dumped = json_dumps(j, 0);
     if (dumped != NULL) {
         printf("path json - %s\n", dumped);
@@ -73,10 +75,11 @@ void test_entity_path() {
         errordebug("dumped is NULL.");
     }
     free(dumped);
+    free(j);
 
     set_path(p, 333, "ph000", "dct000", "kct000");
 
-    decode_json_path(p, j);
+    j = decode_json_path(p);
     dumped = json_dumps(j, 0);
     if (dumped != NULL) {
         printf("path json - %s\n", dumped);
@@ -84,6 +87,7 @@ void test_entity_path() {
         errordebug("dumped is NULL.");
     }
     free(dumped);
+    free(j);
 
     finalize_path(p);
 }
@@ -92,10 +96,10 @@ void test_entity_shared_key() {
     printf("test_entity_shared_key: SharedKey API usage.\n");
 
     SharedKey *sk = initialize_shared_key(1, 2, "ctsk1");
-    json_t *j = json_loads("{}", 0, NULL);
+    json_t *j;
     char *dumped;
 
-    decode_json_shared_key(sk, j);
+    j = decode_json_shared_key(sk);
     dumped = json_dumps(j, 0);
     if (dumped != NULL) {
         printf("shared_key json - %s\n", dumped);
@@ -103,10 +107,11 @@ void test_entity_shared_key() {
         errordebug("dumped is NULL.");
     }
     free(dumped);
+    free(j);
 
     set_shared_key(sk, 3, "ctsk22");
 
-    decode_json_shared_key(sk, j);
+    j = decode_json_shared_key(sk);
     dumped = json_dumps(j, 0);
     if (dumped != NULL) {
         printf("shared_key json - %s\n", dumped);
@@ -114,6 +119,7 @@ void test_entity_shared_key() {
         errordebug("dumped is NULL.");
     }
     free(dumped);
+    free(j);
 
     finalize_shared_key(sk);
 }
@@ -122,10 +128,10 @@ void test_entity_content() {
     printf("test_entity_content: Content API usage.\n");
 
     Content *c = initialize_content(1, "skh1", "ctc1");
-    json_t *j = json_loads("{}", 0, NULL);
+    json_t *j;
     char *dumped;
 
-    decode_json_content(c, j);
+    j = decode_json_content(c);
     dumped = json_dumps(j, 0);
     if (dumped != NULL) {
         printf("content json - %s\n", dumped);
@@ -133,10 +139,11 @@ void test_entity_content() {
         errordebug("dumped is NULL.");
     }
     free(dumped);
+    free(j);
 
     set_content(c, "skh2", "ctc2");
 
-    decode_json_content(c, j);
+    j = decode_json_content(c);
     dumped = json_dumps(j, 0);
     if (dumped != NULL) {
         printf("content json - %s\n", dumped);
@@ -144,6 +151,7 @@ void test_entity_content() {
         errordebug("dumped is NULL.");
     }
     free(dumped);
+    free(j);
 
     finalize_content(c);
 }
@@ -152,10 +160,10 @@ void test_entity_write_permission() {
     printf("test_entity_write_permission: WritePermission API usage.\n");
 
     WritePermission *wp = initialize_write_permission(1, 2, 3);
-    json_t *j = json_loads("{}", 0, NULL);
+    json_t *j;
     char *dumped;
 
-    decode_json_write_permission(wp, j);
+    j = decode_json_write_permission(wp);
     dumped = json_dumps(j, 0);
     if (dumped != NULL) {
         printf("write_permission json - %s\n", dumped);
@@ -163,10 +171,11 @@ void test_entity_write_permission() {
         errordebug("dumped is NULL.");
     }
     free(dumped);
+    free(j);
 
     set_write_permission(wp, 4, 5);
 
-    decode_json_write_permission(wp, j);
+    j = decode_json_write_permission(wp);
     dumped = json_dumps(j, 0);
     if (dumped != NULL) {
         printf("write_permission json - %s\n", dumped);
@@ -174,6 +183,7 @@ void test_entity_write_permission() {
         errordebug("dumped is NULL.");
     }
     free(dumped);
+    free(j);
 
     finalize_write_permission(wp);
 }

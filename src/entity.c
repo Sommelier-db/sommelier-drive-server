@@ -52,7 +52,9 @@ void set_user(User *user, const char *pkd, const char *pkk) {
 
 uint64_t increment_nonce(User *user) { return ++user->nonce; }
 
-void decode_json_user(User *user, json_t *json) {
+json_t *decode_json_user(User *user) {
+    json_t *json = json_object();
+
     if (json_object_set(json, "id", json_integer(user->id)) < 0) {
         errordebug("Setting JSON is failed. - User::id");
         exit(1);
@@ -69,6 +71,8 @@ void decode_json_user(User *user, json_t *json) {
         errordebug("Setting JSON is failed. - User::keyword_public_key");
         exit(1);
     }
+
+    return json;
 }
 
 // Path API
@@ -146,7 +150,9 @@ void set_path(Path *path, uint64_t user_id, const char *ph, const char *ctd,
     }
 }
 
-void decode_json_path(Path *path, json_t *json) {
+json_t *decode_json_path(Path *path) {
+    json_t *json = json_object();
+
     if (json_object_set(json, "id", json_integer(path->id)) < 0) {
         errordebug("Setting JSON is failed. - Path::id");
         exit(1);
@@ -174,6 +180,8 @@ void decode_json_path(Path *path, json_t *json) {
         errordebug("Setting JSON is failed. - Path::keyword_cipher_text");
         exit(1);
     }
+
+    return json;
 }
 
 // PathVector API
@@ -241,8 +249,7 @@ json_t *decode_json_path_vector(PathVector *vec) {
 
     for (int i = 0; i < vec->length; i++) {
         Path *p = vec->buf[i];
-        json_t *j = json_object();
-        decode_json_path(p, j);
+        json_t *j = decode_json_path(p);
 
         char *dumped = json_dumps(j, 0);
         printf("debug - %s\n", dumped);
@@ -297,7 +304,9 @@ void set_shared_key(SharedKey *key, uint64_t path_id, const char *ctsk) {
     }
 }
 
-void decode_json_shared_key(SharedKey *sk, json_t *json) {
+json_t *decode_json_shared_key(SharedKey *sk) {
+    json_t *json = json_object();
+
     if (json_object_set(json, "id", json_integer(sk->id)) < 0) {
         errordebug("Setting JSON is failed. - SharedKey::id");
         exit(1);
@@ -314,6 +323,8 @@ void decode_json_shared_key(SharedKey *sk, json_t *json) {
             "Setting JSON is failed. - SharedKey::shared_key_cipher_text");
         exit(1);
     }
+
+    return json;
 }
 
 // Content API
@@ -372,7 +383,9 @@ void set_content(Content *content, const char *skh, const char *ctc) {
     }
 }
 
-void decode_json_content(Content *c, json_t *json) {
+json_t *decode_json_content(Content *c) {
+    json_t *json = json_object();
+
     if (json_object_set(json, "id", json_integer(c->id)) < 0) {
         errordebug("Setting JSON is failed. - Content::id");
         exit(1);
@@ -389,6 +402,8 @@ void decode_json_content(Content *c, json_t *json) {
         errordebug("Setting JSON is failed. - Content::content_cipher_text");
         exit(1);
     }
+
+    return json;
 }
 
 // ContetnVector API
@@ -455,8 +470,7 @@ json_t *decode_json_content_vector(ContentVector *vec) {
 
     for (int i = 0; i < vec->length; i++) {
         Content *c = vec->buf[i];
-        json_t *j = json_object();
-        decode_json_content(c, j);
+        json_t *j = decode_json_content(c);
         json_array_append(array, j);
     }
 
@@ -493,7 +507,9 @@ void set_write_permission(WritePermission *wp, uint64_t path_id,
     }
 }
 
-void decode_json_write_permission(WritePermission *wp, json_t *json) {
+json_t *decode_json_write_permission(WritePermission *wp) {
+    json_t *json = json_object();
+
     if (json_object_set(json, "id", json_integer(wp->id)) < 0) {
         errordebug("Setting JSON is failed. - WritePermission::id");
         exit(1);
@@ -508,6 +524,8 @@ void decode_json_write_permission(WritePermission *wp, json_t *json) {
         errordebug("Setting JSON is failed. - WritePermission::user_id");
         exit(1);
     }
+
+    return json;
 }
 
 // debug API

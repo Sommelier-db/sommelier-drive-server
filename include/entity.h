@@ -26,7 +26,7 @@ User *initialize_user(uint64_t, const char *, const char *);
 void finalize_user(User *);
 void set_user(User *, const char *, const char *);
 uint64_t increment_nonce(User *);
-void decode_json_user(User *, json_t *);
+json_t *decode_json_user(User *);
 
 typedef struct path_table_row {
     uint64_t id;
@@ -42,7 +42,7 @@ void _initialize_path(Path *, uint64_t, uint64_t, const char *, const char *,
                       const char *);
 void finalize_path(Path *);
 void set_path(Path *, uint64_t, const char *, const char *, const char *);
-void decode_json_path(Path *, json_t *);
+json_t *decode_json_path(Path *);
 
 typedef struct shared_key_table_row {
     uint64_t id;
@@ -53,7 +53,7 @@ typedef struct shared_key_table_row {
 SharedKey *initialize_shared_key(uint64_t, uint64_t, const char *);
 void finalize_shared_key(SharedKey *);
 void set_shared_key(SharedKey *, uint64_t, const char *);
-void decode_json_shared_key(SharedKey *, json_t *);
+json_t *decode_json_shared_key(SharedKey *);
 
 typedef struct content_table_row {
     uint64_t id;
@@ -65,7 +65,7 @@ Content *initialize_content(uint64_t, const char *, const char *);
 void _initialize_content(Content *, uint64_t, const char *, const char *);
 void finalize_content(Content *);
 void set_content(Content *, const char *, const char *);
-void decode_json_content(Content *, json_t *);
+json_t *decode_json_content(Content *);
 
 typedef struct write_permission_table_row {
     uint64_t id;
@@ -76,7 +76,7 @@ typedef struct write_permission_table_row {
 WritePermission *initialize_write_permission(uint64_t, uint64_t, uint64_t);
 void finalize_write_permission(WritePermission *);
 void set_write_permission(WritePermission *, uint64_t, uint64_t);
-void decode_json_write_permission(WritePermission *, json_t *);
+json_t *decode_json_write_permission(WritePermission *);
 
 typedef struct path_table_vector {
     size_t max_size;
