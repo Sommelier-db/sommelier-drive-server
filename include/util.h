@@ -1,3 +1,9 @@
+#pragma once
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #define DEBUG 1
 #define VERBOSE 0
 
@@ -13,3 +19,11 @@
 #define INITIALIZE_STRING(__SIZE__) ((char *)malloc(__SIZE__ * sizeof(char)))
 
 #define errordebug(__MSG__) fprintf(stderr, "[ERROR] %s\n", __MSG__)
+#define debug(__MSG__)                        \
+    fprintf(stdout, "[DEBUG] %s\n", __MSG__); \
+    fflush(stdout)
+
+#define __STRING_COPY(__DST__, __SRC__) \
+    (strncpy(__DST__, __SRC__, strlen(__SRC__) + 1))
+
+char *safe_string_copy(char *dst, const char *src);

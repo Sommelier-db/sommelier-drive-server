@@ -13,24 +13,24 @@ User *initialize_user(uint64_t id, const char *pkd, const char *pkk) {
     user->id = id;
 
     // copy DataPublicKey
-    user->data_public_key = INITIALIZE_STRING(MAX_SIZE_PKE_PK);
+    user->data_public_key = INITIALIZE_STRING(sizeof(pkd));
 
     if (user->data_public_key == NULL) {
         errordebug("Memory allocation is failed. - User::data_public_key");
         exit(1);
     }
 
-    strcpy(user->data_public_key, pkd);
+    user->data_public_key = safe_string_copy(user->data_public_key, pkd);
 
     // copy KeywordPublicKey
-    user->keyword_public_key = INITIALIZE_STRING(MAX_SIZE_PKSE_PK);
+    user->keyword_public_key = INITIALIZE_STRING(sizeof(pkk));
 
     if (user->keyword_public_key == NULL) {
         errordebug("Memory allocation is failed. - User::keyword_public_key");
         exit(1);
     }
 
-    strcpy(user->keyword_public_key, pkk);
+    user->keyword_public_key = safe_string_copy(user->keyword_public_key, pkk);
 
     return user;
 }
@@ -43,10 +43,11 @@ void finalize_user(User *user) {
 
 void set_user(User *user, const char *pkd, const char *pkk) {
     if (pkd != NULL) {
-        strcpy(user->data_public_key, pkd);
+        user->data_public_key = safe_string_copy(user->data_public_key, pkd);
     }
     if (pkk != NULL) {
-        strcpy(user->keyword_public_key, pkk);
+        user->keyword_public_key =
+            safe_string_copy(user->keyword_public_key, pkk);
     }
 }
 
@@ -97,17 +98,16 @@ void _initialize_path(Path *path, uint64_t id, uint64_t user_id, const char *ph,
     path->user_id = user_id;
 
     // copy PermissionHash
-    path->permission_hash = INITIALIZE_STRING(MAX_SIZE_HASH);
+    path->permission_hash = INITIALIZE_STRING(sizeof(ph));
 
     if (path->permission_hash == NULL) {
         errordebug("Memory allocation is failed. - Path::permission_hash");
         exit(1);
     }
 
-    strncpy(path->permission_hash, ph, strlen(ph) + 1);
+    path->permission_hash = safe_string_copy(path->permission_hash, ph);
 
     // copy DataCipherText
-    // path->data_cipher_text = INITIALIZE_STRING(MAX_SIZE_PKSE_CT);
     path->data_cipher_text = INITIALIZE_STRING(sizeof(ctd));
 
     if (path->data_cipher_text == NULL) {
@@ -115,10 +115,9 @@ void _initialize_path(Path *path, uint64_t id, uint64_t user_id, const char *ph,
         exit(1);
     }
 
-    strncpy(path->data_cipher_text, ctd, strlen(ctd) + 1);
+    path->data_cipher_text = safe_string_copy(path->data_cipher_text, ctd);
 
     // copy KeywordCipherText
-    // path->keyword_cipher_text = INITIALIZE_STRING(MAX_SIZE_PKSE_CT);
     path->keyword_cipher_text = INITIALIZE_STRING(sizeof(ctk));
 
     if (path->keyword_cipher_text == NULL) {
@@ -126,7 +125,8 @@ void _initialize_path(Path *path, uint64_t id, uint64_t user_id, const char *ph,
         exit(1);
     }
 
-    strncpy(path->keyword_cipher_text, ctk, strlen(ctk) + 1);
+    path->keyword_cipher_text =
+        safe_string_copy(path->keyword_cipher_text, ctk);
 }
 
 void finalize_path(Path *path) {
@@ -142,13 +142,14 @@ void set_path(Path *path, uint64_t user_id, const char *ph, const char *ctd,
         path->user_id = user_id;
     }
     if (ph != NULL) {
-        strcpy(path->permission_hash, ph);
+        path->permission_hash = safe_string_copy(path->permission_hash, ph);
     }
     if (ctd != NULL) {
-        strcpy(path->data_cipher_text, ctd);
+        path->data_cipher_text = safe_string_copy(path->data_cipher_text, ctd);
     }
     if (ctk != NULL) {
-        strcpy(path->keyword_cipher_text, ctk);
+        path->keyword_cipher_text =
+            safe_string_copy(path->keyword_cipher_text, ctk);
     }
 }
 
@@ -278,7 +279,7 @@ SharedKey *initialize_shared_key(uint64_t id, uint64_t path_id,
     shared_key->path_id = path_id;
 
     // copy SharedKeyCipherText
-    shared_key->shared_key_cipher_text = INITIALIZE_STRING(MAX_SIZE_PKE_CT);
+    shared_key->shared_key_cipher_text = INITIALIZE_STRING(sizeof(ctsk));
 
     if (shared_key->shared_key_cipher_text == NULL) {
         errordebug(
@@ -287,7 +288,8 @@ SharedKey *initialize_shared_key(uint64_t id, uint64_t path_id,
         exit(1);
     }
 
-    strcpy(shared_key->shared_key_cipher_text, ctsk);
+    shared_key->shared_key_cipher_text =
+        safe_string_copy(shared_key->shared_key_cipher_text, ctsk);
 
     return shared_key;
 }
@@ -302,7 +304,8 @@ void set_shared_key(SharedKey *key, uint64_t path_id, const char *ctsk) {
         key->path_id = path_id;
     }
     if (ctsk != NULL) {
-        strcpy(key->shared_key_cipher_text, ctsk);
+        key->shared_key_cipher_text =
+            safe_string_copy(key->shared_key_cipher_text, ctsk);
     }
 }
 
@@ -356,7 +359,7 @@ void _initialize_content(Content *content, uint64_t id, const char *skh,
         exit(1);
     }
 
-    strncpy(content->shared_key_hash, skh, strlen(skh) + 1);
+    content->shared_key_hash = safe_string_copy(content->shared_key_hash, skh);
 
     // copy ContentCipherText
     content->content_cipher_text = INITIALIZE_STRING(sizeof(ctc));
@@ -367,7 +370,8 @@ void _initialize_content(Content *content, uint64_t id, const char *skh,
         exit(1);
     }
 
-    strncpy(content->content_cipher_text, ctc, strlen(ctc) + 1);
+    content->content_cipher_text =
+        safe_string_copy(content->content_cipher_text, ctc);
 }
 
 void finalize_content(Content *content) {
@@ -378,10 +382,12 @@ void finalize_content(Content *content) {
 
 void set_content(Content *content, const char *skh, const char *ctc) {
     if (skh != NULL) {
-        strcpy(content->shared_key_hash, skh);
+        content->shared_key_hash =
+            safe_string_copy(content->shared_key_hash, skh);
     }
     if (ctc != NULL) {
-        strcpy(content->content_cipher_text, ctc);
+        content->content_cipher_text =
+            safe_string_copy(content->content_cipher_text, ctc);
     }
 }
 

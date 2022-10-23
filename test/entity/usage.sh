@@ -3,5 +3,5 @@
 SRC=test/entity/usage.c
 BIN=test/build/entity_usage
 
-gcc -Wall -I./include -o $BIN $SRC object/entity.o -lsqlite3 -ljansson
+gcc -Wall -I./include -o $BIN $SRC object/util.o object/entity.o -lsqlite3 -ljansson
 $BIN
