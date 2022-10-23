@@ -1,5 +1,19 @@
 #include "orm.h"
 
+void __exec_simple_sql(sqlite3 *db, const char *sql) {
+    char *zErrMsg = 0;
+    int rc = sqlite3_exec(db, sql, 0, 0, &zErrMsg);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }
+}
+
+uint64_t __exec_simple_insert_sql(sqlite3 *db, const char *sql) {
+    __exec_simple_sql(db, sql);
+    return (uint64_t)sqlite3_last_insert_rowid(db);
+}
+
 void InitalizeDatabase(sqlite3 *db) {
     // TODO: already exists対策
 
@@ -43,34 +57,47 @@ void InitalizeDatabase(sqlite3 *db) {
     char *zErrMsg = 0;
 
     for (int i = 0; i < SOMMELIER_DRIVE_INITIALIZE_SQL; i++) {
-        if (DEBUG) {
-            printf("    sql - %s\n", sql[i]);
-        }
-
-        rc = sqlite3_exec(db, sql[i], 0, 0, &zErrMsg);
-        if (rc != SQLITE_OK) {
-            fprintf(stderr, "SQL error: %s\n", zErrMsg);
-            sqlite3_free(zErrMsg);
-        }
+        __exec_simple_sql(db, sql[i]);
     }
 }
 
-User *CreateUser(sqlite3 *, char *, char *);
+User *CreateUser(sqlite3 *db, char *pkd, char *pkk) {
+    char sql[MAX_SIZE_SQL_CREATE_USER] = "";
+    sprintf(sql,
+            "INSERT INTO user_table (DataPublicKey, KeywordPublicKey, Nonce) "
+            "values ('%s', '%s', 1)",
+            pkd, pkk);
 
-User *ReadUser(sqlite3 *, int);
+    if (DEBUG) {
+        printf("    sql - %s\n", sql);
+    }
+
+    uint64_t id = __exec_simple_insert_sql(db, sql);
+    User *u = initialize_user(id, pkd, pkk);
+
+    return u;
+}
+
+User *ReadUser(sqlite3 *db, uint64_t id) {
+    char sql[MAX_SIZE_SQL_READ_USER] = "";
+    sprintf(sql,
+            "SELECT UserID, DataPublicKey, KeywordPublicKey, Nonce FROM "
+            "user_table WHERE UserID = %d;",
+            id);
+}
 
 void IncrementUserNonce(sqlite3 *, User *);
 
-SharedKey *CreateSharedKey(sqlite3 *, int, char *);
+SharedKey *CreateSharedKey(sqlite3 *, uint64_t, char *);
 
-SharedKey *ReadSharedKey(sqlite3 *, int);
+SharedKey *ReadSharedKey(sqlite3 *, uint64_t);
 
 Content *CreateContent(sqlite3 *, char *, char *);
 
-Content *ReadContent(sqlite3 *, int);
+Content *ReadContent(sqlite3 *, uint64_t);
 
 ContentVector *FilterBySharedKeyHash(sqlite3 *, char *);
 
-WritePermission *CreateWritePermission(sqlite3 *, int, int);
+WritePermission *CreateWritePermission(sqlite3 *, uint64_t, uint64_t);
 
-WritePermission *ReadWritePermission(sqlite3 *, int);
+WritePermission *ReadWritePermission(sqlite3 *, uint64_t);
