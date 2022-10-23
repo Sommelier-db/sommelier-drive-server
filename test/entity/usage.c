@@ -14,7 +14,7 @@ int main() {
     // FIXME: なぜかこいつらだけ失敗する
     // test_entity_path();
 
-    // test_entity_shared_key();
+    test_entity_shared_key();
 
     // test_entity_content();
 
@@ -112,7 +112,12 @@ void test_entity_path() {
 void test_entity_shared_key() {
     printf("test_entity_shared_key: SharedKey API usage.\n");
 
-    SharedKey *sk = initialize_shared_key(1, 2, "ctsk1");
+    SharedKey *sk = initialize_shared_key();
+    set_shared_key(sk, 1, 2, "ctsk1");
+    if (DEBUG) {
+        debug_shared_key(sk);
+    }
+
     json_t *j;
     char *dumped;
 
@@ -126,7 +131,7 @@ void test_entity_shared_key() {
     free(j);
     free(dumped);
 
-    set_shared_key(sk, 3, "ctsk22");
+    set_shared_key_share_key_cipher_text(sk, "ctsk22");
 
     j = decode_json_shared_key(sk);
     dumped = json_dumps(j, 0);

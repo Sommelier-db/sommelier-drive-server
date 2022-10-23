@@ -54,9 +54,17 @@ typedef struct shared_key_table_row {
     char *shared_key_cipher_text;
 } SharedKey;
 
-SharedKey *initialize_shared_key(uint64_t, uint64_t, const char *);
+// SharedKey *initialize_shared_key(uint64_t, uint64_t, const char *);
+// void finalize_shared_key(SharedKey *);
+// void set_shared_key(SharedKey *, uint64_t, const char *);
+// json_t *decode_json_shared_key(SharedKey *);
+
+SharedKey *initialize_shared_key();
 void finalize_shared_key(SharedKey *);
-void set_shared_key(SharedKey *, uint64_t, const char *);
+void set_shared_key(SharedKey *, uint64_t, uint64_t, const char *);
+void set_shared_key_id(SharedKey *, uint64_t);
+void set_shared_key_path_id(SharedKey *, uint64_t);
+void set_shared_key_share_key_cipher_text(SharedKey *, const char *);
 json_t *decode_json_shared_key(SharedKey *);
 
 typedef struct content_table_row {

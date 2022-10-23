@@ -51,7 +51,7 @@ void set_user_keyword_public_key(User *u, const char *pkk) {
     if (pkk != NULL) {
         u->keyword_public_key = safe_string_copy(u->keyword_public_key, pkk);
     } else if (DEBUG) {
-        echodebug("Arg pkd is NULL. - set_user_keyword_public_key");
+        echodebug("Arg pkk is NULL. - set_user_keyword_public_key");
     }
 }
 
@@ -141,7 +141,7 @@ void set_path_permission_hash(Path *p, const char *ph) {
     if (ph != NULL) {
         p->permission_hash = safe_string_copy(p->permission_hash, ph);
     } else if (DEBUG) {
-        echodebug("Arg pkd is NULL. - set_path_permission_hash");
+        echodebug("Arg ph is NULL. - set_path_permission_hash");
     }
 }
 
@@ -149,7 +149,7 @@ void set_path_data_cipher_text(Path *p, const char *ctd) {
     if (ctd != NULL) {
         p->data_cipher_text = safe_string_copy(p->data_cipher_text, ctd);
     } else if (DEBUG) {
-        echodebug("Arg pkd is NULL. - set_path_data_cipher_text");
+        echodebug("Arg ctd is NULL. - set_path_data_cipher_text");
     }
 }
 
@@ -157,7 +157,7 @@ void set_path_keyword_cipher_text(Path *p, const char *ctk) {
     if (ctk != NULL) {
         p->keyword_cipher_text = safe_string_copy(p->keyword_cipher_text, ctk);
     } else if (DEBUG) {
-        echodebug("Arg pkd is NULL. - set_path_keyword_cipher_text");
+        echodebug("Arg ctk is NULL. - set_path_keyword_cipher_text");
     }
 }
 
@@ -274,32 +274,46 @@ json_t *decode_json_path_vector(PathVector *vec) {
 
 // SharedKey API
 
-SharedKey *initialize_shared_key(uint64_t id, uint64_t path_id,
-                                 const char *ctsk) {
-    SharedKey *shared_key = INITIALIZE(SharedKey);
+// SharedKey *initialize_shared_key(uint64_t id, uint64_t path_id,
+//                                  const char *ctsk) {
+//     SharedKey *shared_key = INITIALIZE(SharedKey);
 
-    if (shared_key == NULL) {
+//     if (shared_key == NULL) {
+//         errordebug("Memory allocation is failed. - SharedKey");
+//         exit(1);
+//     }
+
+//     shared_key->id = id;
+//     shared_key->path_id = path_id;
+
+//     // copy SharedKeyCipherText
+//     shared_key->shared_key_cipher_text = INITIALIZE_STRING(sizeof(ctsk));
+
+//     if (shared_key->shared_key_cipher_text == NULL) {
+//         errordebug(
+//             "Memory allocation is failed. - "
+//             "SharedKey::shared_key_cipher_text");
+//         exit(1);
+//     }
+
+//     shared_key->shared_key_cipher_text =
+//         safe_string_copy(shared_key->shared_key_cipher_text, ctsk);
+
+//     return shared_key;
+// }
+
+SharedKey *initialize_shared_key() {
+    SharedKey *sk = INITIALIZE(SharedKey);
+
+    if (sk == NULL) {
         errordebug("Memory allocation is failed. - SharedKey");
         exit(1);
     }
 
-    shared_key->id = id;
-    shared_key->path_id = path_id;
+    sk->shared_key_cipher_text =
+        initialize_string("SharedKey::shared_key_cipher_text");
 
-    // copy SharedKeyCipherText
-    shared_key->shared_key_cipher_text = INITIALIZE_STRING(sizeof(ctsk));
-
-    if (shared_key->shared_key_cipher_text == NULL) {
-        errordebug(
-            "Memory allocation is failed. - "
-            "SharedKey::shared_key_cipher_text");
-        exit(1);
-    }
-
-    shared_key->shared_key_cipher_text =
-        safe_string_copy(shared_key->shared_key_cipher_text, ctsk);
-
-    return shared_key;
+    return sk;
 }
 
 void finalize_shared_key(SharedKey *key) {
@@ -307,13 +321,25 @@ void finalize_shared_key(SharedKey *key) {
     free(key);
 }
 
-void set_shared_key(SharedKey *key, uint64_t path_id, const char *ctsk) {
-    if (path_id != key->path_id) {
-        key->path_id = path_id;
-    }
+void set_shared_key(SharedKey *sk, uint64_t id, uint64_t path_id,
+                    const char *ctsk) {
+    set_shared_key_id(sk, id);
+    set_shared_key_path_id(sk, path_id);
+    set_shared_key_share_key_cipher_text(sk, ctsk);
+}
+
+void set_shared_key_id(SharedKey *sk, uint64_t id) { sk->id = id; }
+
+void set_shared_key_path_id(SharedKey *sk, uint64_t path_id) {
+    sk->path_id = path_id;
+}
+
+void set_shared_key_share_key_cipher_text(SharedKey *sk, const char *ctsk) {
     if (ctsk != NULL) {
-        key->shared_key_cipher_text =
-            safe_string_copy(key->shared_key_cipher_text, ctsk);
+        sk->shared_key_cipher_text =
+            safe_string_copy(sk->shared_key_cipher_text, ctsk);
+    } else if (DEBUG) {
+        echodebug("Arg ctsk is NULL. - set_shared_key_share_key_cipher_text");
     }
 }
 
@@ -561,7 +587,11 @@ void debug_path(Path *p) {
     fflush(stdout);
 }
 
-void debug_shared_key(SharedKey *);
+void debug_shared_key(SharedKey *sk) {
+    fprintf(stdout, "<SharedKey id: %ld, pid: %ld, ctsk: %s>\n", sk->id,
+            sk->path_id, sk->shared_key_cipher_text);
+    fflush(stdout);
+}
 
 void debug_content(Content *);
 
