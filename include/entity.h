@@ -1,10 +1,7 @@
 #pragma once
 
 #include <jansson.h>
-#include <sqlite3.h>
 #include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "util.h"
 
