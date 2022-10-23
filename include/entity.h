@@ -19,9 +19,13 @@ typedef struct user_table_row {
     uint64_t nonce;
 } User;
 
-User *initialize_user(uint64_t, const char *, const char *);
+User *initialize_user();
 void finalize_user(User *);
-void set_user(User *, const char *, const char *);
+void set_user(User *, uint64_t, const char *, const char *, uint64_t);
+void set_user_id(User *, uint64_t);
+void set_user_data_public_key(User *, const char *);
+void set_user_keyword_public_key(User *, const char *);
+void set_user_nonce(User *, uint64_t);
 uint64_t increment_nonce(User *);
 json_t *decode_json_user(User *);
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,11 +20,16 @@
 #define INITIALIZE_STRING(__SIZE__) ((char *)malloc(__SIZE__ * sizeof(char)))
 
 #define errordebug(__MSG__) fprintf(stderr, "[ERROR] %s\n", __MSG__)
-#define debug(__MSG__)                        \
-    fprintf(stdout, "[DEBUG] %s\n", __MSG__); \
-    fflush(stdout)
+#define echodebug(__MSG__) fprintf(stdout, "[DEBUG] %s\n", __MSG__)
 
 #define __STRING_COPY(__DST__, __SRC__) \
     (strncpy(__DST__, __SRC__, strlen(__SRC__) + 1))
 
+char *initialize_string(const char *field);
 char *safe_string_copy(char *dst, const char *src);
+
+#if DEBUG
+void debug_string_pointer(const char *, const char *);
+void debug_uint_pointer(const char *, uint64_t);
+void debug_void_pointer(const char *, void *);
+#endif

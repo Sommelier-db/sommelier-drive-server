@@ -2,54 +2,60 @@
 
 // User API
 
-User *initialize_user(uint64_t id, const char *pkd, const char *pkk) {
-    User *user = INITIALIZE(User);
+User *initialize_user() {
+    User *u = INITIALIZE(User);
 
-    if (user == NULL) {
+    if (u == NULL) {
         errordebug("Memory allocation is failed. - User");
         exit(1);
     }
 
-    user->id = id;
+    u->data_public_key = initialize_string("User::data_public_key");
+    u->keyword_public_key = initialize_string("User::keyword_public_key");
 
-    // copy DataPublicKey
-    user->data_public_key = INITIALIZE_STRING(sizeof(pkd));
-
-    if (user->data_public_key == NULL) {
-        errordebug("Memory allocation is failed. - User::data_public_key");
-        exit(1);
-    }
-
-    user->data_public_key = safe_string_copy(user->data_public_key, pkd);
-
-    // copy KeywordPublicKey
-    user->keyword_public_key = INITIALIZE_STRING(sizeof(pkk));
-
-    if (user->keyword_public_key == NULL) {
-        errordebug("Memory allocation is failed. - User::keyword_public_key");
-        exit(1);
-    }
-
-    user->keyword_public_key = safe_string_copy(user->keyword_public_key, pkk);
-
-    return user;
+    return u;
 }
 
 void finalize_user(User *user) {
-    free(user->data_public_key);
-    free(user->keyword_public_key);
+    // FIXME: 適切なfinalizeの実装
+
+    // debug_string_pointer("free user->data_public_key",
+    //     user->data_public_key);
+    // free(user->data_public_key);
+    // debug_string_pointer("free user->keyword_public_key",
+    //     user->keyword_public_key);
+    // free(user->keyword_public_key);
+    // debug_void_pointer("free user", (void *)user);
     free(user);
 }
 
-void set_user(User *user, const char *pkd, const char *pkk) {
+void set_user(User *u, uint64_t id, const char *pkd, const char *pkk,
+              uint64_t nonce) {
+    set_user_id(u, id);
+    set_user_data_public_key(u, pkd);
+    set_user_keyword_public_key(u, pkk);
+    set_user_nonce(u, nonce);
+}
+
+void set_user_id(User *u, uint64_t id) { u->id = id; }
+
+void set_user_data_public_key(User *u, const char *pkd) {
     if (pkd != NULL) {
-        user->data_public_key = safe_string_copy(user->data_public_key, pkd);
-    }
-    if (pkk != NULL) {
-        user->keyword_public_key =
-            safe_string_copy(user->keyword_public_key, pkk);
+        u->data_public_key = safe_string_copy(u->data_public_key, pkd);
+    } else if (DEBUG) {
+        echodebug("Arg pkd is NULL. - set_user_data_public_key");
     }
 }
+
+void set_user_keyword_public_key(User *u, const char *pkk) {
+    if (pkk != NULL) {
+        u->keyword_public_key = safe_string_copy(u->keyword_public_key, pkk);
+    } else if (DEBUG) {
+        echodebug("Arg pkd is NULL. - set_user_keyword_public_key");
+    }
+}
+
+void set_user_nonce(User *u, uint64_t nonce) { u->nonce = nonce; }
 
 uint64_t increment_nonce(User *user) { return ++user->nonce; }
 
@@ -70,6 +76,11 @@ json_t *decode_json_user(User *user) {
     if (json_object_set(json, "keyword_public_key",
                         json_string(user->keyword_public_key)) < 0) {
         errordebug("Setting JSON is failed. - User::keyword_public_key");
+        exit(1);
+    }
+
+    if (json_object_set(json, "nonce", json_integer(user->nonce)) < 0) {
+        errordebug("Setting JSON is failed. - User::nonce");
         exit(1);
     }
 
@@ -540,7 +551,11 @@ json_t *decode_json_write_permission(WritePermission *wp) {
 
 #if DEBUG
 
-void debug_user(User *);
+void debug_user(User *u) {
+    fprintf(stdout, "<User id: %ld, pkd: %s, pkk: %s, nonce: %ld>\n", u->id,
+            u->data_public_key, u->keyword_public_key, u->nonce);
+    fflush(stdout);
+}
 
 void debug_path(Path *);
 

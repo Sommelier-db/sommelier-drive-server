@@ -14,16 +14,16 @@ int main() {
     // FIXME: なぜかこいつらだけ失敗する
     // test_entity_path();
 
-    test_entity_shared_key();
+    // test_entity_shared_key();
 
-    test_entity_content();
+    // test_entity_content();
 
-    test_entity_write_permission();
+    // test_entity_write_permission();
 
     // FIXME: なぜかこいつらだけ失敗する
     // test_entity_path_vector();
 
-    test_entity_content_vector();
+    // test_entity_content_vector();
 
     return 0;
 }
@@ -31,7 +31,13 @@ int main() {
 void test_entity_user() {
     printf("test_entity_user: User API usage.\n");
 
-    User *u = initialize_user(1, "pkd01", "pkk01");
+    // User *u = initialize_user(1, "pkd01", "pkk01");
+    User *u = initialize_user();
+    set_user(u, 1, "pkd01", "pkk02", 1);
+    if (DEBUG) {
+        debug_user(u);
+    }
+
     json_t *j;
     char *dumped;
 
@@ -45,7 +51,12 @@ void test_entity_user() {
     free(j);
     free(dumped);
 
-    set_user(u, "pkdx11", "pkkx11");
+    set_user_data_public_key(u, "pkd1101");
+    set_user_keyword_public_key(u, "pkk2022");
+    increment_nonce(u);
+    if (DEBUG) {
+        debug_user(u);
+    }
 
     j = decode_json_user(u);
     dumped = json_dumps(j, 0);

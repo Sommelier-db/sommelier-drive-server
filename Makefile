@@ -8,6 +8,7 @@ OBJECTS = $(OBJECT)/util.o $(OBJECT)/entity.o $(OBJECT)/orm.o $(OBJECT)/mongoose
 LIBRARIES = -lsqlite3 -ljansson
 
 TARGET = $(BUILD)/main
+TEST_TARGETS = test/build/*
 CC = gcc
 # CFLAGS = -Wall -O2 -I./include
 CFLAGS = -Wall -I./include
@@ -26,8 +27,8 @@ init:
 
 .PHONY: clean
 clean:
-	rm -rf $(OBJECTS) $(TARGET)
+	rm -rf $(OBJECTS) $(TARGET) $(TEST_TARGETS)
 
 .PHONY: clean-all
 clean-all:
-	rm -rf $(OBJECTS) $(TARGET) $(LOG)/* $(DATA)/*
+	rm -rf $(OBJECTS) $(TARGET) $(TEST_TARGETS) $(LOG)/* $(DATA)/*
