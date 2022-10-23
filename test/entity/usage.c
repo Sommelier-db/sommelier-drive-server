@@ -16,14 +16,14 @@ int main() {
 
     test_entity_shared_key();
 
-    // test_entity_content();
+    test_entity_content();
 
     // test_entity_write_permission();
 
     // FIXME: なぜかこいつらだけ失敗する
     // test_entity_path_vector();
 
-    // test_entity_content_vector();
+    test_entity_content_vector();
 
     return 0;
 }
@@ -149,7 +149,12 @@ void test_entity_shared_key() {
 void test_entity_content() {
     printf("test_entity_content: Content API usage.\n");
 
-    Content *c = initialize_content(1, "skh1", "ctc1");
+    Content *c = initialize_content();
+    set_content(c, 1, "skh1", "ctc1");
+    if (DEBUG) {
+        debug_content(c);
+    }
+
     json_t *j;
     char *dumped;
 
@@ -163,7 +168,7 @@ void test_entity_content() {
     free(j);
     free(dumped);
 
-    set_content(c, "skh2", "ctc2");
+    set_content_shared_key_hash(c, "skh2");
 
     j = decode_json_content(c);
     dumped = json_dumps(j, 0);
@@ -240,7 +245,8 @@ void test_entity_content_vector() {
     ContentVector *v = initialize_content_vector();
 
     for (int i = 0; i < 3; i++) {
-        Content *c = initialize_content(i + 1, "xxx", "iii");
+        Content *c = initialize_content();
+        set_content(c, i + 1, "xxx", "iii");
         push_content_vector(v, c);
     }
 

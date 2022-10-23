@@ -239,7 +239,7 @@ size_t push_path_vector(PathVector *vec, Path *path) {
              path->permission_hash, path->data_cipher_text,
              path->keyword_cipher_text);
 
-    return vec->length;
+    return ++vec->length;
 }
 
 size_t resize_path_vector(PathVector *vec) {
@@ -261,11 +261,6 @@ json_t *decode_json_path_vector(PathVector *vec) {
     for (int i = 0; i < vec->length; i++) {
         Path *p = vec->buf[i];
         json_t *j = decode_json_path(p);
-
-        char *dumped = json_dumps(j, 0);
-        printf("debug - %s\n", dumped);
-        free(dumped);
-
         json_array_append(array, j);
     }
 
@@ -273,34 +268,6 @@ json_t *decode_json_path_vector(PathVector *vec) {
 }
 
 // SharedKey API
-
-// SharedKey *initialize_shared_key(uint64_t id, uint64_t path_id,
-//                                  const char *ctsk) {
-//     SharedKey *shared_key = INITIALIZE(SharedKey);
-
-//     if (shared_key == NULL) {
-//         errordebug("Memory allocation is failed. - SharedKey");
-//         exit(1);
-//     }
-
-//     shared_key->id = id;
-//     shared_key->path_id = path_id;
-
-//     // copy SharedKeyCipherText
-//     shared_key->shared_key_cipher_text = INITIALIZE_STRING(sizeof(ctsk));
-
-//     if (shared_key->shared_key_cipher_text == NULL) {
-//         errordebug(
-//             "Memory allocation is failed. - "
-//             "SharedKey::shared_key_cipher_text");
-//         exit(1);
-//     }
-
-//     shared_key->shared_key_cipher_text =
-//         safe_string_copy(shared_key->shared_key_cipher_text, ctsk);
-
-//     return shared_key;
-// }
 
 SharedKey *initialize_shared_key() {
     SharedKey *sk = INITIALIZE(SharedKey);
@@ -368,44 +335,18 @@ json_t *decode_json_shared_key(SharedKey *sk) {
 
 // Content API
 
-Content *initialize_content(uint64_t id, const char *skh, const char *ctc) {
-    Content *content = INITIALIZE(Content);
+Content *initialize_content() {
+    Content *c = INITIALIZE(Content);
 
-    _initialize_content(content, id, skh, ctc);
-
-    return content;
-}
-
-void _initialize_content(Content *content, uint64_t id, const char *skh,
-                         const char *ctc) {
-    if (content == NULL) {
+    if (c == NULL) {
         errordebug("Memory allocation is failed. - Content");
         exit(1);
     }
 
-    content->id = id;
+    c->shared_key_hash = initialize_string("Content::shared_key_hash");
+    c->content_cipher_text = initialize_string("Content::content_cipher_text");
 
-    // copy SharedKeyHash
-    content->shared_key_hash = INITIALIZE_STRING(sizeof(skh));
-
-    if (content->shared_key_hash == NULL) {
-        errordebug("Memory allocation is failed. - Content::shared_key_hash");
-        exit(1);
-    }
-
-    content->shared_key_hash = safe_string_copy(content->shared_key_hash, skh);
-
-    // copy ContentCipherText
-    content->content_cipher_text = INITIALIZE_STRING(sizeof(ctc));
-
-    if (content->content_cipher_text == NULL) {
-        errordebug(
-            "Memory allocation is failed. - Content::content_cipher_text");
-        exit(1);
-    }
-
-    content->content_cipher_text =
-        safe_string_copy(content->content_cipher_text, ctc);
+    return c;
 }
 
 void finalize_content(Content *content) {
@@ -414,14 +355,27 @@ void finalize_content(Content *content) {
     free(content);
 }
 
-void set_content(Content *content, const char *skh, const char *ctc) {
+void set_content(Content *c, u_int64_t id, const char *skh, const char *ctc) {
+    set_content_id(c, id);
+    set_content_shared_key_hash(c, skh);
+    set_content_content_cipher_text(c, ctc);
+}
+
+void set_content_id(Content *c, uint64_t id) { c->id = id; }
+
+void set_content_shared_key_hash(Content *c, const char *skh) {
     if (skh != NULL) {
-        content->shared_key_hash =
-            safe_string_copy(content->shared_key_hash, skh);
+        c->shared_key_hash = safe_string_copy(c->shared_key_hash, skh);
+    } else if (DEBUG) {
+        echodebug("Arg skh is NULL. - set_content_shared_key_hash");
     }
+}
+
+void set_content_content_cipher_text(Content *c, const char *ctc) {
     if (ctc != NULL) {
-        content->content_cipher_text =
-            safe_string_copy(content->content_cipher_text, ctc);
+        c->content_cipher_text = safe_string_copy(c->content_cipher_text, ctc);
+    } else if (DEBUG) {
+        echodebug("Arg ctc is NULL. - set_content_content_cipher_text");
     }
 }
 
@@ -486,10 +440,10 @@ size_t push_content_vector(ContentVector *vec, Content *content) {
         resize_content_vector(vec);
     }
 
-    vec->buf[vec->length] = INITIALIZE(Content);
+    vec->buf[vec->length] = initialize_content();
 
-    _initialize_content(vec->buf[vec->length], content->id,
-                        content->shared_key_hash, content->content_cipher_text);
+    set_content(vec->buf[vec->length], content->id, content->shared_key_hash,
+                content->content_cipher_text);
 
     return ++vec->length;
 }
@@ -593,7 +547,11 @@ void debug_shared_key(SharedKey *sk) {
     fflush(stdout);
 }
 
-void debug_content(Content *);
+void debug_content(Content *c) {
+    fprintf(stdout, "<Content id: %ld, skh: %s, ctc: %s>\n", c->id,
+            c->shared_key_hash, c->content_cipher_text);
+    fflush(stdout);
+}
 
 void debug_write_permission(WritePermission *);
 

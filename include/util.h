@@ -6,7 +6,7 @@
 #include <string.h>
 
 #define DEBUG 1
-#define VERBOSE 1
+#define VERBOSE 0
 
 #define VECTOR_MAX_SIZE_DEFAULT 16
 #define VECTOR_EXTEND_RATE 2

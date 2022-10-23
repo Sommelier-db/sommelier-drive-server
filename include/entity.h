@@ -54,11 +54,6 @@ typedef struct shared_key_table_row {
     char *shared_key_cipher_text;
 } SharedKey;
 
-// SharedKey *initialize_shared_key(uint64_t, uint64_t, const char *);
-// void finalize_shared_key(SharedKey *);
-// void set_shared_key(SharedKey *, uint64_t, const char *);
-// json_t *decode_json_shared_key(SharedKey *);
-
 SharedKey *initialize_shared_key();
 void finalize_shared_key(SharedKey *);
 void set_shared_key(SharedKey *, uint64_t, uint64_t, const char *);
@@ -73,10 +68,12 @@ typedef struct content_table_row {
     char *content_cipher_text;
 } Content;
 
-Content *initialize_content(uint64_t, const char *, const char *);
-void _initialize_content(Content *, uint64_t, const char *, const char *);
+Content *initialize_content();
 void finalize_content(Content *);
-void set_content(Content *, const char *, const char *);
+void set_content(Content *, uint64_t, const char *, const char *);
+void set_content_id(Content *, uint64_t);
+void set_content_shared_key_hash(Content *, const char *);
+void set_content_content_cipher_text(Content *, const char *);
 json_t *decode_json_content(Content *);
 
 typedef struct write_permission_table_row {
