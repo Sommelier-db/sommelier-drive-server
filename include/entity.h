@@ -82,9 +82,12 @@ typedef struct write_permission_table_row {
     uint64_t user_id;
 } WritePermission;
 
-WritePermission *initialize_write_permission(uint64_t, uint64_t, uint64_t);
+WritePermission *initialize_write_permission();
 void finalize_write_permission(WritePermission *);
-void set_write_permission(WritePermission *, uint64_t, uint64_t);
+void set_write_permission(WritePermission *, uint64_t, uint64_t, uint64_t);
+void set_write_permission_id(WritePermission *, uint64_t);
+void set_write_permission_path_id(WritePermission *, uint64_t);
+void set_write_permission_user_id(WritePermission *, uint64_t);
 json_t *decode_json_write_permission(WritePermission *);
 
 typedef struct path_table_vector {

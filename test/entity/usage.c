@@ -18,7 +18,7 @@ int main() {
 
     test_entity_content();
 
-    // test_entity_write_permission();
+    test_entity_write_permission();
 
     // FIXME: なぜかこいつらだけ失敗する
     // test_entity_path_vector();
@@ -186,7 +186,12 @@ void test_entity_content() {
 void test_entity_write_permission() {
     printf("test_entity_write_permission: WritePermission API usage.\n");
 
-    WritePermission *wp = initialize_write_permission(1, 2, 3);
+    WritePermission *wp = initialize_write_permission();
+    set_write_permission(wp, 1, 2, 3);
+    if (DEBUG) {
+        debug_write_permission(wp);
+    }
+
     json_t *j;
     char *dumped;
 
@@ -200,7 +205,8 @@ void test_entity_write_permission() {
     free(j);
     free(dumped);
 
-    set_write_permission(wp, 4, 5);
+    set_write_permission_path_id(wp, 4);
+    set_write_permission_user_id(wp, 5);
 
     j = decode_json_write_permission(wp);
     dumped = json_dumps(j, 0);

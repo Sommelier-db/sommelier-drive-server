@@ -475,8 +475,7 @@ json_t *decode_json_content_vector(ContentVector *vec) {
 
 // WritePermission API
 
-WritePermission *initialize_write_permission(uint64_t id, uint64_t path_id,
-                                             uint64_t user_id) {
+WritePermission *initialize_write_permission() {
     WritePermission *wp = INITIALIZE(WritePermission);
 
     if (wp == NULL) {
@@ -484,23 +483,26 @@ WritePermission *initialize_write_permission(uint64_t id, uint64_t path_id,
         exit(1);
     }
 
-    wp->id = id;
-    wp->path_id = path_id;
-    wp->user_id = user_id;
-
     return wp;
 }
 
 void finalize_write_permission(WritePermission *wp) { free(wp); }
 
-void set_write_permission(WritePermission *wp, uint64_t path_id,
+void set_write_permission(WritePermission *wp, uint64_t id, uint64_t path_id,
                           uint64_t user_id) {
-    if (path_id != wp->path_id) {
-        wp->path_id = path_id;
-    }
-    if (user_id != wp->user_id) {
-        wp->user_id = user_id;
-    }
+    set_write_permission_id(wp, id);
+    set_write_permission_path_id(wp, path_id);
+    set_write_permission_user_id(wp, user_id);
+}
+
+void set_write_permission_id(WritePermission *wp, uint64_t id) { wp->id = id; }
+
+void set_write_permission_path_id(WritePermission *wp, uint64_t path_id) {
+    wp->path_id = path_id;
+}
+
+void set_write_permission_user_id(WritePermission *wp, uint64_t user_id) {
+    wp->user_id = user_id;
 }
 
 json_t *decode_json_write_permission(WritePermission *wp) {
@@ -553,7 +555,11 @@ void debug_content(Content *c) {
     fflush(stdout);
 }
 
-void debug_write_permission(WritePermission *);
+void debug_write_permission(WritePermission *wp) {
+    fprintf(stdout, "<WritePermission id: %ld, pid: %ld, uid: %ld>\n", wp->id,
+            wp->path_id, wp->user_id);
+    fflush(stdout);
+}
 
 void debug_path_vector(PathVector *);
 
