@@ -60,6 +60,7 @@ typedef struct content_table_row {
 } Content;
 
 Content *initialize_content(uint64_t, const char *, const char *);
+void _initialize_content(Content *, uint64_t, const char *, const char *);
 void finalize_content(Content *);
 void set_content(Content *, const char *, const char *);
 void decode_json_content(Content *, json_t *);
@@ -85,17 +86,19 @@ PathVector *initialize_path_vector();
 void finalize_path_vector(PathVector *);
 size_t push_path_vector(PathVector *, Path *);
 size_t resize_path_vector(PathVector *);
+json_t *decode_json_path_vector(PathVector *);
 
 typedef struct content_table_vector {
     size_t max_size;
     size_t length;
-    Content *buf;
+    Content **buf;
 } ContentVector;
 
 ContentVector *initialize_content_vector();
 void finalize_content_vector(ContentVector *);
 size_t push_content_vector(ContentVector *, Content *);
 size_t resize_content_vector(ContentVector *);
+json_t *decode_json_content_vector(ContentVector *);
 
 #if DEBUG
 void debug_user(User *);

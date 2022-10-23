@@ -1,9 +1,9 @@
 #include <jansson.h>
 
 int main() {
-    json_error_t *err = NULL;
+    // json_error_t *err = NULL;
     char *dumped = NULL;
-    json_t *j = json_loads("{\"x\": 42, \"y\": 213}", 0, err);
+    json_t *j = json_object();
 
     dumped = json_dumps(j, 0);
     printf("%s\n", dumped);
@@ -15,6 +15,14 @@ int main() {
     dumped = json_dumps(j, 0);
     printf("%s\n", dumped);
 
+    json_t *array = json_array();
+
+    json_array_append(array, j);
+
+    dumped = json_dumps(array, 0);
+    printf("%s\n", dumped);
+
     free(j);
+    free(array);
     free(dumped);
 }

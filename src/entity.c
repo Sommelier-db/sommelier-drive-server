@@ -231,6 +231,19 @@ size_t resize_path_vector(PathVector *vec) {
     return new_size;
 }
 
+json_t *decode_json_path_vector(PathVector *vec) {
+    json_t *array = json_array();
+
+    for (int i = 0; i < vec->length; i++) {
+        Path _p = vec->buf[i];
+        json_t *_j = json_object();
+        decode_json_path(&_p, _j);
+        json_array_append(array, _j);
+    }
+
+    return array;
+}
+
 // SharedKey API
 
 SharedKey *initialize_shared_key(uint64_t id, uint64_t path_id,
@@ -298,6 +311,13 @@ void decode_json_shared_key(SharedKey *sk, json_t *json) {
 Content *initialize_content(uint64_t id, const char *skh, const char *ctc) {
     Content *content = INITIALIZE(Content);
 
+    _initialize_content(content, id, skh, ctc);
+
+    return content;
+}
+
+void _initialize_content(Content *content, uint64_t id, const char *skh,
+                         const char *ctc) {
     if (content == NULL) {
         errordebug("Memory allocation is failed. - Content");
         exit(1);
@@ -325,8 +345,6 @@ Content *initialize_content(uint64_t id, const char *skh, const char *ctc) {
     }
 
     strcpy(content->content_cipher_text, ctc);
-
-    return content;
 }
 
 void finalize_content(Content *content) {
@@ -375,7 +393,7 @@ ContentVector *initialize_content_vector() {
 
     vec->max_size = VECTOR_MAX_SIZE_DEFAULT;
     vec->length = 0;
-    vec->buf = INITIALIZE_SIZE(Content, VECTOR_MAX_SIZE_DEFAULT);
+    vec->buf = INITIALIZE_SIZE(Content *, VECTOR_MAX_SIZE_DEFAULT);
 
     if (vec->buf == NULL) {
         errordebug("Memory allocation is failed. - ContentVector::buf");
@@ -392,19 +410,26 @@ void finalize_content_vector(ContentVector *vec) {
 
 size_t push_content_vector(ContentVector *vec, Content *content) {
     if (vec->length == vec->max_size) {
+        if (DEBUG) {
+            printf(
+                "[DEBUG] resize_content_vector() called. - "
+                "push_content_vector()\n");
+        }
         resize_content_vector(vec);
     }
 
-    set_content(&vec->buf[vec->length++], content->shared_key_hash,
-                content->content_cipher_text);
+    vec->buf[vec->length] = INITIALIZE(Content);
 
-    return vec->length;
+    _initialize_content(vec->buf[vec->length], content->id,
+                        content->shared_key_hash, content->content_cipher_text);
+
+    return ++vec->length;
 }
 
 size_t resize_content_vector(ContentVector *vec) {
     size_t new_size = VECTOR_EXTEND_RATE * vec->max_size;
     vec->max_size = new_size;
-    vec->buf = (Content *)realloc(vec->buf, new_size * refsizeof(Content));
+    vec->buf = (Content **)realloc(vec->buf, new_size * refsizeof(Content));
 
     if (vec->buf == NULL) {
         errordebug("Memory re-allocation is failed. - ContentVector::buf");
@@ -412,6 +437,19 @@ size_t resize_content_vector(ContentVector *vec) {
     }
 
     return new_size;
+}
+
+json_t *decode_json_content_vector(ContentVector *vec) {
+    json_t *array = json_array();
+
+    for (int i = 0; i < vec->length; i++) {
+        Content *c = vec->buf[i];
+        json_t *j = json_object();
+        decode_json_content(c, j);
+        json_array_append(array, j);
+    }
+
+    return array;
 }
 
 // WritePermission API
