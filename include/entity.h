@@ -37,12 +37,15 @@ typedef struct path_table_row {
     char *keyword_cipher_text;
 } Path;
 
-Path *initialize_path(uint64_t, uint64_t, const char *, const char *,
-                      const char *);
-void _initialize_path(Path *, uint64_t, uint64_t, const char *, const char *,
-                      const char *);
+Path *initialize_path();
 void finalize_path(Path *);
-void set_path(Path *, uint64_t, const char *, const char *, const char *);
+void set_path(Path *, uint64_t, uint64_t, const char *, const char *,
+              const char *);
+void set_path_id(Path *, uint64_t);
+void set_path_user_id(Path *, uint64_t);
+void set_path_permission_hash(Path *, const char *);
+void set_path_data_cipher_text(Path *, const char *);
+void set_path_keyword_cipher_text(Path *, const char *);
 json_t *decode_json_path(Path *);
 
 typedef struct shared_key_table_row {

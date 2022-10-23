@@ -9,7 +9,7 @@ void test_entity_path_vector();
 void test_entity_content_vector();
 
 int main() {
-    test_entity_user();
+    // test_entity_user();
 
     // FIXME: なぜかこいつらだけ失敗する
     // test_entity_path();
@@ -74,13 +74,14 @@ void test_entity_user() {
 void test_entity_path() {
     printf("test_entity_path: Path API usage.\n");
 
-    Path *p = initialize_path(111, 222, "ph01", "dct01", "kct01");
+    Path *p = initialize_path();
+    set_path(p, 1, 1, "ph01", "ct_d01", "ct_k01");
+    if (DEBUG) {
+        debug_path(p);
+    }
+
     json_t *j;
     char *dumped;
-
-    printf("[D] %p: %s\n", p->permission_hash, p->permission_hash);
-    printf("[D] %p: %s\n", p->data_cipher_text, p->data_cipher_text);
-    printf("[D] %p: %s\n", p->keyword_cipher_text, p->keyword_cipher_text);
 
     j = decode_json_path(p);
     dumped = json_dumps(j, 0);
@@ -92,7 +93,8 @@ void test_entity_path() {
     free(j);
     free(dumped);
 
-    set_path(p, 333, "ph000", "dct000", "kct000");
+    set_path_data_cipher_text(p, "ct_d0022");
+    set_path_keyword_cipher_text(p, "ct_k0022");
 
     j = decode_json_path(p);
     dumped = json_dumps(j, 0);
@@ -209,7 +211,8 @@ void test_entity_path_vector() {
     PathVector *v = initialize_path_vector();
 
     for (int i = 0; i < 3; i++) {
-        Path *p = initialize_path(i + 1, i + 101, "ph", "ctd", "ctk");
+        Path *p = initialize_path();
+        set_path(p, i + 1, i + 101, "ph", "ctd", "ctk");
         push_path_vector(v, p);
     }
 

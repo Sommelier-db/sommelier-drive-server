@@ -11,7 +11,7 @@ TARGET = $(BUILD)/main
 TEST_TARGETS = test/build/*
 CC = gcc
 # CFLAGS = -Wall -O2 -I./include
-CFLAGS = -Wall -I./include
+CFLAGS = -Wall -O0 -I./include
 
 $(TARGET): $(OBJECTS)
 	$(CC) -o $(TARGET) $^ $(LIBRARIES)

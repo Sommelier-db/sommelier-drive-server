@@ -89,55 +89,19 @@ json_t *decode_json_user(User *user) {
 
 // Path API
 
-Path *initialize_path(uint64_t id, uint64_t user_id, const char *ph,
-                      const char *ctd, const char *ctk) {
-    Path *path = INITIALIZE(Path);
+Path *initialize_path() {
+    Path *p = INITIALIZE(Path);
 
-    _initialize_path(path, id, user_id, ph, ctd, ctk);
-
-    return path;
-}
-
-void _initialize_path(Path *path, uint64_t id, uint64_t user_id, const char *ph,
-                      const char *ctd, const char *ctk) {
-    if (path == NULL) {
+    if (p == NULL) {
         errordebug("Memory allocation is failed. - Path");
         exit(1);
     }
 
-    path->id = id;
-    path->user_id = user_id;
+    p->permission_hash = initialize_string("Path::permission_hash");
+    p->data_cipher_text = initialize_string("Path::data_cipher_text");
+    p->keyword_cipher_text = initialize_string("Path::keyword_cipher_text");
 
-    // copy PermissionHash
-    path->permission_hash = INITIALIZE_STRING(sizeof(ph));
-
-    if (path->permission_hash == NULL) {
-        errordebug("Memory allocation is failed. - Path::permission_hash");
-        exit(1);
-    }
-
-    path->permission_hash = safe_string_copy(path->permission_hash, ph);
-
-    // copy DataCipherText
-    path->data_cipher_text = INITIALIZE_STRING(sizeof(ctd));
-
-    if (path->data_cipher_text == NULL) {
-        errordebug("Memory allocation is failed. - Path::data_cipher_text");
-        exit(1);
-    }
-
-    path->data_cipher_text = safe_string_copy(path->data_cipher_text, ctd);
-
-    // copy KeywordCipherText
-    path->keyword_cipher_text = INITIALIZE_STRING(sizeof(ctk));
-
-    if (path->keyword_cipher_text == NULL) {
-        errordebug("Memory allocation is failed. - Path::keyword_cipher_text");
-        exit(1);
-    }
-
-    path->keyword_cipher_text =
-        safe_string_copy(path->keyword_cipher_text, ctk);
+    return p;
 }
 
 void finalize_path(Path *path) {
@@ -147,20 +111,53 @@ void finalize_path(Path *path) {
     free(path);
 }
 
-void set_path(Path *path, uint64_t user_id, const char *ph, const char *ctd,
-              const char *ctk) {
-    if (user_id != path->user_id) {
-        path->user_id = user_id;
+void set_path(Path *p, uint64_t id, uint64_t user_id, const char *ph,
+              const char *ctd, const char *ctk) {
+    set_path_id(p, id);
+    set_path_user_id(p, user_id);
+    set_path_permission_hash(p, ph);
+    set_path_data_cipher_text(p, ctd);
+    set_path_keyword_cipher_text(p, ctk);
+}
+
+void set_path_id(Path *p, uint64_t id) { p->id = id; }
+
+void set_path_user_id(Path *p, uint64_t user_id) { p->user_id = user_id; }
+
+void set_path_permission_hash(Path *p, const char *ph) {
+    if (VERBOSE) {
+        debug_string_pointer("set_path_permission_hash: p->ph",
+                             p->permission_hash);
+        debug_string_pointer("set_path_permission_hash: ph", ph);
+
+        char *dst = __STRING_COPY(p->permission_hash, ph);
+
+        debug_string_pointer("set_path_permission_hash2: dst", dst);
+        debug_string_pointer("set_path_permission_hash2: p->ph",
+                             p->permission_hash);
+        debug_string_pointer("set_path_permission_hash2: ph", ph);
     }
+
     if (ph != NULL) {
-        path->permission_hash = safe_string_copy(path->permission_hash, ph);
+        p->permission_hash = safe_string_copy(p->permission_hash, ph);
+    } else if (DEBUG) {
+        echodebug("Arg pkd is NULL. - set_path_permission_hash");
     }
+}
+
+void set_path_data_cipher_text(Path *p, const char *ctd) {
     if (ctd != NULL) {
-        path->data_cipher_text = safe_string_copy(path->data_cipher_text, ctd);
+        p->data_cipher_text = safe_string_copy(p->data_cipher_text, ctd);
+    } else if (DEBUG) {
+        echodebug("Arg pkd is NULL. - set_path_data_cipher_text");
     }
+}
+
+void set_path_keyword_cipher_text(Path *p, const char *ctk) {
     if (ctk != NULL) {
-        path->keyword_cipher_text =
-            safe_string_copy(path->keyword_cipher_text, ctk);
+        p->keyword_cipher_text = safe_string_copy(p->keyword_cipher_text, ctk);
+    } else if (DEBUG) {
+        echodebug("Arg pkd is NULL. - set_path_keyword_cipher_text");
     }
 }
 
@@ -236,11 +233,11 @@ size_t push_path_vector(PathVector *vec, Path *path) {
         resize_path_vector(vec);
     }
 
-    vec->buf[vec->length] = INITIALIZE(Path);
+    vec->buf[vec->length] = initialize_path();
 
-    _initialize_path(vec->buf[vec->length], path->id, path->user_id,
-                     path->permission_hash, path->data_cipher_text,
-                     path->keyword_cipher_text);
+    set_path(vec->buf[vec->length], path->id, path->user_id,
+             path->permission_hash, path->data_cipher_text,
+             path->keyword_cipher_text);
 
     return vec->length;
 }
@@ -557,7 +554,12 @@ void debug_user(User *u) {
     fflush(stdout);
 }
 
-void debug_path(Path *);
+void debug_path(Path *p) {
+    fprintf(stdout, "<Path id: %ld, uid: %ld, ph: %s, ctd: %s, ctk: %s>\n",
+            p->id, p->user_id, p->permission_hash, p->data_cipher_text,
+            p->keyword_cipher_text);
+    fflush(stdout);
+}
 
 void debug_shared_key(SharedKey *);
 
