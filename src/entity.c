@@ -75,10 +75,15 @@ void decode_json_user(User *user, json_t *json) {
 
 Path *initialize_path(uint64_t id, uint64_t user_id, const char *ph,
                       const char *ctd, const char *ctk) {
-    printf("<ph: %s, ctd: %s, ctk: %s>\n", ph, ctd, ctk);
-
     Path *path = INITIALIZE(Path);
 
+    _initialize_path(path, id, user_id, ph, ctd, ctk);
+
+    return path;
+}
+
+void _initialize_path(Path *path, uint64_t id, uint64_t user_id, const char *ph,
+                      const char *ctd, const char *ctk) {
     if (path == NULL) {
         errordebug("Memory allocation is failed. - Path");
         exit(1);
@@ -107,8 +112,6 @@ Path *initialize_path(uint64_t id, uint64_t user_id, const char *ph,
 
     strcpy(path->data_cipher_text, ctd);
 
-    printf("debug - %p, %s\n", path->data_cipher_text, path->data_cipher_text);
-
     // copy KeywordCipherText
     path->keyword_cipher_text = INITIALIZE_STRING(MAX_SIZE_PKSE_CT);
 
@@ -118,13 +121,6 @@ Path *initialize_path(uint64_t id, uint64_t user_id, const char *ph,
     }
 
     strcpy(path->keyword_cipher_text, ctk);
-
-    printf("debug - %p, %s\n", path->permission_hash, path->permission_hash);
-    printf("debug - %p, %s\n", path->data_cipher_text, path->data_cipher_text);
-    printf("debug - %p, %s\n", path->keyword_cipher_text,
-           path->keyword_cipher_text);
-
-    return path;
 }
 
 void finalize_path(Path *path) {
@@ -192,7 +188,7 @@ PathVector *initialize_path_vector() {
 
     vec->max_size = VECTOR_MAX_SIZE_DEFAULT;
     vec->length = 0;
-    vec->buf = INITIALIZE_SIZE(Path, VECTOR_MAX_SIZE_DEFAULT);
+    vec->buf = INITIALIZE_SIZE(Path *, vec->max_size);
 
     if (vec->buf == NULL) {
         errordebug("Memory allocation is failed. - PathVector::buf");
@@ -209,11 +205,20 @@ void finalize_path_vector(PathVector *vec) {
 
 size_t push_path_vector(PathVector *vec, Path *path) {
     if (vec->length == vec->max_size) {
+        if (DEBUG) {
+            printf(
+                "[DEBUG] resize_path_vector() called. - "
+                "push_path_vector()\n");
+        }
+
         resize_path_vector(vec);
     }
 
-    set_path(&vec->buf[vec->length++], path->user_id, path->permission_hash,
-             path->data_cipher_text, path->keyword_cipher_text);
+    vec->buf[vec->length] = INITIALIZE(Path);
+
+    _initialize_path(vec->buf[vec->length], path->id, path->user_id,
+                     path->permission_hash, path->data_cipher_text,
+                     path->keyword_cipher_text);
 
     return vec->length;
 }
@@ -221,7 +226,7 @@ size_t push_path_vector(PathVector *vec, Path *path) {
 size_t resize_path_vector(PathVector *vec) {
     size_t new_size = VECTOR_EXTEND_RATE * vec->max_size;
     vec->max_size = new_size;
-    vec->buf = (Path *)realloc(vec->buf, new_size * refsizeof(Path));
+    vec->buf = (Path **)realloc(vec->buf, new_size * refsizeof(Path));
 
     if (vec->buf == NULL) {
         errordebug("Memory re-allocation is failed. - PathVector::buf");
@@ -235,10 +240,15 @@ json_t *decode_json_path_vector(PathVector *vec) {
     json_t *array = json_array();
 
     for (int i = 0; i < vec->length; i++) {
-        Path _p = vec->buf[i];
-        json_t *_j = json_object();
-        decode_json_path(&_p, _j);
-        json_array_append(array, _j);
+        Path *p = vec->buf[i];
+        json_t *j = json_object();
+        decode_json_path(p, j);
+
+        char *dumped = json_dumps(j, 0);
+        printf("debug - %s\n", dumped);
+        free(dumped);
+
+        json_array_append(array, j);
     }
 
     return array;
@@ -393,7 +403,7 @@ ContentVector *initialize_content_vector() {
 
     vec->max_size = VECTOR_MAX_SIZE_DEFAULT;
     vec->length = 0;
-    vec->buf = INITIALIZE_SIZE(Content *, VECTOR_MAX_SIZE_DEFAULT);
+    vec->buf = INITIALIZE_SIZE(Content *, vec->max_size);
 
     if (vec->buf == NULL) {
         errordebug("Memory allocation is failed. - ContentVector::buf");
@@ -415,6 +425,7 @@ size_t push_content_vector(ContentVector *vec, Content *content) {
                 "[DEBUG] resize_content_vector() called. - "
                 "push_content_vector()\n");
         }
+
         resize_content_vector(vec);
     }
 

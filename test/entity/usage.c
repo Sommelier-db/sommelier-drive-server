@@ -9,13 +9,20 @@ void test_entity_path_vector();
 void test_entity_content_vector();
 
 int main() {
-    // test_entity_user();
-    // FIXME: なぜかこいつだけ失敗する
+    test_entity_user();
+
+    // FIXME: なぜかこいららだけ失敗する
     // test_entity_path();
-    // test_entity_shared_key();
+
+    test_entity_shared_key();
+
     test_entity_content();
-    // test_entity_write_permission();
+
+    test_entity_write_permission();
+
+    // FIXME: なぜかこいつらだけ失敗する
     // test_entity_path_vector();
+
     test_entity_content_vector();
 
     return 0;
@@ -174,28 +181,28 @@ void test_entity_write_permission() {
 void test_entity_path_vector() {
     printf("test_entity_path_vector: PathVector API usage.\n");
 
-    PathVector *vec = initialize_path_vector();
+    printf("1. initialize\n");
+    PathVector *v = initialize_path_vector();
 
-    Path *path1 = initialize_path(11, 21, "ph333111", "ctd444111", "ctk555111");
-    Path *path2 = initialize_path(12, 22, "ph333222", "ctd444222", "ctk555222");
-    Path *path3 = initialize_path(13, 23, "ph333333", "ctd444333", "ctk555333");
-    Path *path4 = initialize_path(14, 24, "ph333444", "ctd444444", "ctk555444");
-    push_path_vector(vec, path1);
-    push_path_vector(vec, path2);
-    push_path_vector(vec, path3);
-    push_path_vector(vec, path4);
+    printf("2. contents\n");
+    for (int i = 0; i < 3; i++) {
+        Path *p = initialize_path(i + 1, i + 101, "ph", "ctd", "ctk");
+        push_path_vector(v, p);
+    }
 
-    json_t *a = decode_json_path_vector(vec);
+    printf("3. decode json\n");
+    json_t *a = decode_json_path_vector(v);
+    printf("4. dumped json\n");
     char *dumped = json_dumps(a, 0);
     if (dumped != NULL) {
-        printf("write_permission json - %s\n", dumped);
+        printf("path_vector json - %s\n", dumped);
     } else {
         errordebug("dumped is NULL.");
     }
     free(dumped);
     free(a);
 
-    finalize_path_vector(vec);
+    finalize_path_vector(v);
 }
 
 void test_entity_content_vector() {
@@ -215,7 +222,7 @@ void test_entity_content_vector() {
     printf("4. dumped json\n");
     char *dumped = json_dumps(a, 0);
     if (dumped != NULL) {
-        printf("write_permission json - %s\n", dumped);
+        printf("content_vector json - %s\n", dumped);
     } else {
         errordebug("dumped is NULL.");
     }

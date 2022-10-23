@@ -38,6 +38,8 @@ typedef struct path_table_row {
 
 Path *initialize_path(uint64_t, uint64_t, const char *, const char *,
                       const char *);
+void _initialize_path(Path *, uint64_t, uint64_t, const char *, const char *,
+                      const char *);
 void finalize_path(Path *);
 void set_path(Path *, uint64_t, const char *, const char *, const char *);
 void decode_json_path(Path *, json_t *);
@@ -79,7 +81,7 @@ void decode_json_write_permission(WritePermission *, json_t *);
 typedef struct path_table_vector {
     size_t max_size;
     size_t length;
-    Path *buf;
+    Path **buf;
 } PathVector;
 
 PathVector *initialize_path_vector();
