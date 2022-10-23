@@ -12,7 +12,7 @@ int main() {
     test_entity_user();
 
     // FIXME: なぜかこいららだけ失敗する
-    // test_entity_path();
+    test_entity_path();
 
     test_entity_shared_key();
 
@@ -42,8 +42,8 @@ void test_entity_user() {
     } else {
         errordebug("dumped is NULL.");
     }
-    free(dumped);
     free(j);
+    free(dumped);
 
     set_user(u, "pkdx1", "pkkx1");
 
@@ -54,8 +54,8 @@ void test_entity_user() {
     } else {
         errordebug("dumped is NULL.");
     }
-    free(dumped);
     free(j);
+    free(dumped);
 
     finalize_user(u);
 }
@@ -63,7 +63,7 @@ void test_entity_user() {
 void test_entity_path() {
     printf("test_entity_path: Path API usage.\n");
 
-    Path *p = initialize_path(111, 222, "ph111", "dct111", "kct111");
+    Path *p = initialize_path(111, 222, "ph01", "dct01", "kct01");
     json_t *j;
     char *dumped;
 
@@ -74,8 +74,8 @@ void test_entity_path() {
     } else {
         errordebug("dumped is NULL.");
     }
-    free(dumped);
     free(j);
+    free(dumped);
 
     set_path(p, 333, "ph000", "dct000", "kct000");
 
@@ -86,8 +86,8 @@ void test_entity_path() {
     } else {
         errordebug("dumped is NULL.");
     }
-    free(dumped);
     free(j);
+    free(dumped);
 
     finalize_path(p);
 }
@@ -106,8 +106,8 @@ void test_entity_shared_key() {
     } else {
         errordebug("dumped is NULL.");
     }
-    free(dumped);
     free(j);
+    free(dumped);
 
     set_shared_key(sk, 3, "ctsk22");
 
@@ -118,8 +118,8 @@ void test_entity_shared_key() {
     } else {
         errordebug("dumped is NULL.");
     }
-    free(dumped);
     free(j);
+    free(dumped);
 
     finalize_shared_key(sk);
 }
@@ -138,8 +138,8 @@ void test_entity_content() {
     } else {
         errordebug("dumped is NULL.");
     }
-    free(dumped);
     free(j);
+    free(dumped);
 
     set_content(c, "skh2", "ctc2");
 
@@ -150,8 +150,8 @@ void test_entity_content() {
     } else {
         errordebug("dumped is NULL.");
     }
-    free(dumped);
     free(j);
+    free(dumped);
 
     finalize_content(c);
 }
@@ -170,8 +170,8 @@ void test_entity_write_permission() {
     } else {
         errordebug("dumped is NULL.");
     }
-    free(dumped);
     free(j);
+    free(dumped);
 
     set_write_permission(wp, 4, 5);
 
@@ -182,8 +182,8 @@ void test_entity_write_permission() {
     } else {
         errordebug("dumped is NULL.");
     }
-    free(dumped);
     free(j);
+    free(dumped);
 
     finalize_write_permission(wp);
 }
@@ -191,53 +191,45 @@ void test_entity_write_permission() {
 void test_entity_path_vector() {
     printf("test_entity_path_vector: PathVector API usage.\n");
 
-    printf("1. initialize\n");
     PathVector *v = initialize_path_vector();
 
-    printf("2. contents\n");
     for (int i = 0; i < 3; i++) {
         Path *p = initialize_path(i + 1, i + 101, "ph", "ctd", "ctk");
         push_path_vector(v, p);
     }
 
-    printf("3. decode json\n");
     json_t *a = decode_json_path_vector(v);
-    printf("4. dumped json\n");
     char *dumped = json_dumps(a, 0);
     if (dumped != NULL) {
         printf("path_vector json - %s\n", dumped);
     } else {
         errordebug("dumped is NULL.");
     }
-    free(dumped);
-    free(a);
 
+    free(a);
+    free(dumped);
     finalize_path_vector(v);
 }
 
 void test_entity_content_vector() {
     printf("test_entity_content_vector: ContentVector API usage.\n");
 
-    printf("1. initialize\n");
     ContentVector *v = initialize_content_vector();
 
-    printf("2. contents\n");
     for (int i = 0; i < 3; i++) {
         Content *c = initialize_content(i + 1, "xxx", "iii");
         push_content_vector(v, c);
     }
 
-    printf("3. decode json\n");
     json_t *a = decode_json_content_vector(v);
-    printf("4. dumped json\n");
     char *dumped = json_dumps(a, 0);
     if (dumped != NULL) {
         printf("content_vector json - %s\n", dumped);
     } else {
         errordebug("dumped is NULL.");
     }
-    free(dumped);
-    free(a);
 
+    free(a);
+    free(dumped);
     finalize_content_vector(v);
 }

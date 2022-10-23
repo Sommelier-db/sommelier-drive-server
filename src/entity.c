@@ -104,27 +104,29 @@ void _initialize_path(Path *path, uint64_t id, uint64_t user_id, const char *ph,
         exit(1);
     }
 
-    strcpy(path->permission_hash, ph);
+    strncpy(path->permission_hash, ph, strlen(ph) + 1);
 
     // copy DataCipherText
-    path->data_cipher_text = INITIALIZE_STRING(MAX_SIZE_PKE_CT);
+    // path->data_cipher_text = INITIALIZE_STRING(MAX_SIZE_PKSE_CT);
+    path->data_cipher_text = INITIALIZE_STRING(sizeof(ctd));
 
     if (path->data_cipher_text == NULL) {
         errordebug("Memory allocation is failed. - Path::data_cipher_text");
         exit(1);
     }
 
-    strcpy(path->data_cipher_text, ctd);
+    strncpy(path->data_cipher_text, ctd, strlen(ctd) + 1);
 
     // copy KeywordCipherText
-    path->keyword_cipher_text = INITIALIZE_STRING(MAX_SIZE_PKSE_CT);
+    // path->keyword_cipher_text = INITIALIZE_STRING(MAX_SIZE_PKSE_CT);
+    path->keyword_cipher_text = INITIALIZE_STRING(sizeof(ctk));
 
     if (path->keyword_cipher_text == NULL) {
         errordebug("Memory allocation is failed. - Path::keyword_cipher_text");
         exit(1);
     }
 
-    strcpy(path->keyword_cipher_text, ctk);
+    strncpy(path->keyword_cipher_text, ctk, strlen(ctk) + 1);
 }
 
 void finalize_path(Path *path) {
@@ -171,7 +173,7 @@ json_t *decode_json_path(Path *path) {
 
     if (json_object_set(json, "data_cipher_text",
                         json_string(path->data_cipher_text)) < 0) {
-        errordebug("Setting JSON is failed.");
+        errordebug("Setting JSON is failed. - Path::data_cipher_text");
         exit(1);
     }
 
@@ -347,17 +349,17 @@ void _initialize_content(Content *content, uint64_t id, const char *skh,
     content->id = id;
 
     // copy SharedKeyHash
-    content->shared_key_hash = INITIALIZE_STRING(MAX_SIZE_HASH);
+    content->shared_key_hash = INITIALIZE_STRING(sizeof(skh));
 
     if (content->shared_key_hash == NULL) {
         errordebug("Memory allocation is failed. - Content::shared_key_hash");
         exit(1);
     }
 
-    strcpy(content->shared_key_hash, skh);
+    strncpy(content->shared_key_hash, skh, strlen(skh) + 1);
 
     // copy ContentCipherText
-    content->content_cipher_text = INITIALIZE_STRING(MAX_SIZE_PKE_CT);
+    content->content_cipher_text = INITIALIZE_STRING(sizeof(ctc));
 
     if (content->content_cipher_text == NULL) {
         errordebug(
@@ -365,7 +367,7 @@ void _initialize_content(Content *content, uint64_t id, const char *skh,
         exit(1);
     }
 
-    strcpy(content->content_cipher_text, ctc);
+    strncpy(content->content_cipher_text, ctc, strlen(ctc) + 1);
 }
 
 void finalize_content(Content *content) {
