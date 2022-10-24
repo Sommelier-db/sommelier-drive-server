@@ -5,16 +5,20 @@
 #include "entity.h"
 
 #define SOMMELIER_DRIVE_N_TABLES 5
-#define SOMMELIER_DRIVE_INITIALIZE_SQL 6
-#define MAX_SIZE_SQL_PLANE_TEXT 1024
+#define SOMMELIER_DRIVE_INITIALIZE_SQL 7
+#define MAX_SIZE_SQL_PLANE_TEXT 500
 
 #define MAX_SIZE_SQL_CREATE_USER \
-    MAX_SIZE_SQL_PLANE_TEXT + MAX_SIZE_PKE_CT + MAX_SIZE_PKSE_CT
-#define MAX_SIZE_SQL_CREATE_PATH \
-    MAX_SIZE_SQL_PLANE_TEXT + MAX_SIZE_HASH + MAX_SIZE_PKE_CT + MAX_SIZE_PKSE_CT
+    MAX_SIZE_SQL_PLANE_TEXT + MAX_SIZE_PKE_KEY + MAX_SIZE_PKSE_KEY
+#define MAX_SIZE_SQL_CREATE_PATH                                \
+    MAX_SIZE_SQL_PLANE_TEXT + MAX_SIZE_HASH + MAX_SIZE_PKE_CT + \
+        MAX_SIZE_PKSE_KEYWORD_CT
 #define MAX_SIZE_SQL_CREATE_SHARED_KEY MAX_SIZE_SQL_PLANE_TEXT + MAX_SIZE_PKE_CT
-#define MAX_SIZE_SQL_CREATE_CONTENT \
-    MAX_SIZE_SQL_PLANE_TEXT + MAX_SIZE_HASH + MAX_SIZE_SKE_CT
+#define MAX_SIZE_SQL_CREATE_AUTHORIZATION_SEED \
+    MAX_SIZE_SQL_PLANE_TEXT + MAX_SIZE_PKE_CT
+#define MAX_SIZE_SQL_CREATE_CONTENT                              \
+    MAX_SIZE_SQL_PLANE_TEXT + MAX_SIZE_HASH + MAX_SIZE_PKE_KEY + \
+        MAX_SIZE_PKSE_CONTENT_CT
 #define MAX_SIZE_SQL_CREATE_WRITE_PERMISSION MAX_SIZE_SQL_PLANE_TEXT
 
 #define MAX_SIZE_SQL_READ_BY_ID MAX_SIZE_SQL_PLANE_TEXT
@@ -42,9 +46,15 @@ SharedKey *CreateSharedKey(sqlite3 *, uint64_t, char *);
 
 SharedKey *ReadSharedKey(sqlite3 *, uint64_t);
 
-Content *CreateContent(sqlite3 *, char *, char *);
+AuthorizationSeed *CreateAuthorizationSeed(sqlite3 *, uint64_t, char *);
+
+AuthorizationSeed *ReadAuthorizationSeed(sqlite3 *, uint64_t);
+
+Content *CreateContent(sqlite3 *, char *, char *, char *);
 
 Content *ReadContent(sqlite3 *, uint64_t);
+
+void IncrementContentNonce(sqlite3 *, Content *);
 
 ContentVector *FilterBySharedKeyHash(sqlite3 *, char *);
 

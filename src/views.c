@@ -1,11 +1,5 @@
 #include "views.h"
 
-#include <jansson.h>
-
-#include "mongoose.h"
-#include "orm.h"
-#include "util.h"
-
 #define __ERROR_REPLY(c) \
     (mg_http_reply(c, 500, "", "{\"msg\": \"internal error\"}\n"))
 

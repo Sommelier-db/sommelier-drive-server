@@ -50,7 +50,7 @@ void test_entity_user() {
 
     set_user_data_public_key(u, "pkd1101");
     set_user_keyword_public_key(u, "pkk2022");
-    increment_nonce(u);
+    increment_user_nonce(u);
     if (DEBUG) {
         debug_user(u);
     }

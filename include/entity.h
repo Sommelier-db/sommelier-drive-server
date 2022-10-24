@@ -5,19 +5,21 @@
 
 #include "util.h"
 
-#define MAX_SIZE_PKE_PK 1024
-#define MAX_SIZE_PKSE_PK 1024
-#define MAX_SIZE_SKE_KEY 1024
-#define MAX_SIZE_HASH 1024
-#define MAX_SIZE_PKE_CT 1024
-#define MAX_SIZE_PKSE_CT 1024
-#define MAX_SIZE_SKE_CT 1024
+#define MAX_SIZE_PKE_KEY 720
+#define MAX_SIZE_PKSE_KEY 47112
+#define MAX_SIZE_HASH 32
+#define MAX_SIZE_PKE_CT 512
+#define MAX_SIZE_PKSE_KEYWORD_CT 2900000
+#define MAX_SIZE_PKSE_CONTENT_CT 4194360
+
+#define VECTOR_MAX_SIZE_DEFAULT 16
+#define VECTOR_EXTEND_RATE 2
 
 typedef struct user_table_row {
     uint64_t id;
-    uint64_t nonce;
     char *data_public_key;
     char *keyword_public_key;
+    uint64_t nonce;
 } User;
 
 User *initialize_user();
@@ -27,7 +29,7 @@ void set_user_id(User *, uint64_t);
 void set_user_data_public_key(User *, const char *);
 void set_user_keyword_public_key(User *, const char *);
 void set_user_nonce(User *, uint64_t);
-uint64_t increment_nonce(User *);
+uint64_t increment_user_nonce(User *);
 json_t *decode_json_user(User *);
 
 typedef struct path_table_row {
@@ -63,18 +65,40 @@ void set_shared_key_path_id(SharedKey *, uint64_t);
 void set_shared_key_share_key_cipher_text(SharedKey *, const char *);
 json_t *decode_json_shared_key(SharedKey *);
 
+typedef struct authorization_seed_table_row {
+    uint64_t id;
+    uint64_t path_id;
+    char *authorization_seed_cipher_text;
+} AuthorizationSeed;
+
+AuthorizationSeed *initialize_authorization_seed();
+void finalize_authorization_seed(AuthorizationSeed *);
+void set_authorization_seed(AuthorizationSeed *, uint64_t, uint64_t,
+                            const char *);
+void set_authorization_seed_id(AuthorizationSeed *, uint64_t);
+void set_authorization_seed_path_id(AuthorizationSeed *, uint64_t);
+void set_authorization_seed_authorization_seed_cipher_text(AuthorizationSeed *,
+                                                           const char *);
+json_t *decode_json_authorization_seed(AuthorizationSeed *);
+
 typedef struct content_table_row {
     uint64_t id;
     char *shared_key_hash;
+    char *authorization_public_key;
+    uint64_t nonce;
     char *content_cipher_text;
 } Content;
 
 Content *initialize_content();
 void finalize_content(Content *);
-void set_content(Content *, uint64_t, const char *, const char *);
+void set_content(Content *, uint64_t, const char *, const char *, uint64_t,
+                 const char *);
 void set_content_id(Content *, uint64_t);
 void set_content_shared_key_hash(Content *, const char *);
+void set_content_authorization_public_key(Content *, const char *);
+void set_content_nonce(Content *, uint64_t);
 void set_content_content_cipher_text(Content *, const char *);
+uint64_t increment_content_nonce(Content *);
 json_t *decode_json_content(Content *);
 
 typedef struct write_permission_table_row {

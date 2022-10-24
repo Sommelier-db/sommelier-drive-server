@@ -40,19 +40,27 @@ void InitalizeDatabase(sqlite3 *db) {
             SharedKeyCipherText TEXT NOT NULL,\
             CONSTRAINT path_id_ref_to_path_table FOREIGN KEY (PathID) REFERENCES path_table (PathID)\
         );",                          // (3) create shared_key table
+        "CREATE TABLE authorization_seed_table (\
+            AuthorizationSeedID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
+            PathID INTEGER NOT NULL,\
+            AuthorizationSeedCipherText TEXT NOT NULL,\
+            CONSTRAINT path_id_ref_to_path_table FOREIGN KEY (PathID) REFERENCES path_table (PathID)\
+        );",                          // (4) create authorization_seed table
         "CREATE TABLE content_table (\
             ContentID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
             SharedKeyHash TEXT NOT NULL,\
+            AuthorizationPublicKey TEXT NOT NULL,\
+            Nonce INTEGER NOT NULL,\
             ContentCipherText TEXT NOT NULL\
-        );",                          // (4) create content table
+        );",                          // (5) create content table
         "CREATE TABLE write_permission_table (\
             WritePermissionID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
             PathID INTEGER NOT NULL,\
             UserID INTEGER NOT NULL,\
             CONSTRAINT content_path_id_ref_to_path_table FOREIGN KEY (PathID) REFERENCES path_table (PathID),\
             CONSTRAINT content_user_id_ref_to_user_table FOREIGN KEY (UserID) REFERENCES user_table (UserID)\
-        );",                          // (5) create write_permission table
-        "PRAGMA foreign_keys=true;",  // (6) enable forign key
+        );",                          // (6) create write_permission table
+        "PRAGMA foreign_keys=true;",  // (7) enable forign key
     };
 
     for (int i = 0; i < SOMMELIER_DRIVE_INITIALIZE_SQL; i++) {
@@ -66,7 +74,7 @@ User *CreateUser(sqlite3 *db, char *pkd, char *pkk) {
     char sql[MAX_SIZE_SQL_CREATE_USER] = "";
     sprintf(sql,
             "INSERT INTO user_table (DataPublicKey, KeywordPublicKey, Nonce) "
-            "values ('%s', '%s', 1)",
+            "values ('%s', '%s', 1);",
             pkd, pkk);
 
     if (DEBUG) {
@@ -121,12 +129,19 @@ User *ReadUser(sqlite3 *db, uint64_t id) {
         finalize_user(u);
         return NULL;
     }
+
+    return NULL;
 }
 
 void IncrementUserNonce(sqlite3 *db, User *u) {
-    uint64_t n = increment_nonce(u);
+    uint64_t n = increment_user_nonce(u);
     char sql[MAX_SIZE_SQL_PLANE_TEXT] = "";
     sprintf(sql, "UPDATE user_table SET Nonce=%ld WHERE UserID=%ld;", n, u->id);
+
+    if (DEBUG) {
+        printf("    sql - %s\n", sql);
+    }
+
     __exec_simple_sql(db, sql);
 }
 
@@ -162,16 +177,20 @@ Path *ReadPath(sqlite3 *db, uint64_t id) {
     }
 
     sqlite3_stmt *stmt = NULL;
-    int return_value = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
-    if (return_value) {
-        printf("sqlite3_prepare_v2 is failed. (err_code=%d)\n", return_value);
-        exit(return_value);
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    if (rc != SQLITE_OK) {
+        if (DEBUG) {
+            char msg[100] = "";
+            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code=%d)\n", rc);
+            errordebug(msg);
+        }
+        return NULL;
     }
 
     Path *p = initialize_path();
 
-    return_value = sqlite3_step(stmt);
-    if (return_value == SQLITE_ROW) {
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW) {
         uint64_t id = (uint64_t)sqlite3_column_int(stmt, 0);
         uint64_t uid = (uint64_t)sqlite3_column_int(stmt, 1);
         char *ph = (char *)sqlite3_column_text(stmt, 2);
@@ -179,26 +198,32 @@ Path *ReadPath(sqlite3 *db, uint64_t id) {
         char *ctk = (char *)sqlite3_column_text(stmt, 4);
 
         set_path(p, id, uid, ph, ctd, ctk);
+        return p;
     } else {
-        printf("Some error encountered.\n");
-        exit(1);
+        if (DEBUG) {
+            errordebug("Some error encountered. - sqlite3_step");
+        }
+
+        finalize_path(p);
+        return NULL;
     }
 
-    return p;
+    return NULL;
 }
 
 static int callback_filter_path_by_permission_hash(void *vec, int argc,
                                                    char **argv,
                                                    char **azColName) {
     if (DEBUG) {
-        printf("    select - id: %s, skh: %s, ctc: %s\n", argv[0], argv[1],
-               argv[2]);
+        printf("    select - id: %s, uid: %s, ph: %s, ctd: %s, ctk: %s\n",
+               argv[0], argv[1], argv[2], argv[3], argv[4]);
     }
 
-    Path *p = initialize_path();
-    set_path(p, AS_U64(argv[0]), AS_U64(argv[1]), argv[2], argv[3], argv[4]);
-    push_path_vector((PathVector *)vec, p);
-    finalize_path(p);
+    // Path *p = initialize_path();
+    // set_path(p, AS_U64(argv[0]), AS_U64(argv[1]), argv[2], argv[3], argv[4]);
+    Path p = {AS_U64(argv[0]), AS_U64(argv[1]), argv[2], argv[3], argv[4]};
+    push_path_vector((PathVector *)vec, &p);
+    // finalize_path(p);
 
     return 0;
 }
@@ -255,36 +280,112 @@ SharedKey *ReadSharedKey(sqlite3 *db, uint64_t id) {
             "shared_key_table WHERE SharedKeyID = %ld;",
             id);
 
+    if (DEBUG) {
+        printf("    sql - %s\n", sql);
+    }
+
     sqlite3_stmt *stmt = NULL;
-    int return_value = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
-    if (return_value) {
-        printf("sqlite3_prepare_v2 is failed. (err_code=%d)\n", return_value);
-        exit(return_value);
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    if (rc != SQLITE_OK) {
+        if (DEBUG) {
+            char msg[100] = "";
+            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code=%d)\n", rc);
+            errordebug(msg);
+        }
+        return NULL;
     }
 
     SharedKey *sk = initialize_shared_key();
 
-    return_value = sqlite3_step(stmt);
-    if (return_value == SQLITE_ROW) {
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW) {
         uint64_t id = (uint64_t)sqlite3_column_int(stmt, 0);
         uint64_t pid = (uint64_t)sqlite3_column_int(stmt, 1);
         char *ctsk = (char *)sqlite3_column_text(stmt, 2);
 
         set_shared_key(sk, id, pid, ctsk);
+        return sk;
     } else {
-        printf("Some error encountered.\n");
-        exit(1);
+        if (DEBUG) {
+            errordebug("Some error encountered. - sqlite3_step");
+        }
+
+        finalize_shared_key(sk);
+        return NULL;
     }
 
-    return sk;
+    return NULL;
 }
 
-Content *CreateContent(sqlite3 *db, char *skh, char *ctc) {
+AuthorizationSeed *CreateAuthorizationSeed(sqlite3 *db, uint64_t pid,
+                                           char *ctas) {
+    char sql[MAX_SIZE_SQL_CREATE_AUTHORIZATION_SEED] = "";
+    sprintf(sql,
+            "INSERT INTO authorization_seed_table (PathID, "
+            "AuthorizationSeedCipherText) values (%ld, '%s');",
+            pid, ctas);
+
+    if (DEBUG) {
+        printf("    sql - %s\n", sql);
+    }
+
+    uint64_t id = __exec_simple_insert_sql(db, sql);
+    AuthorizationSeed *as = initialize_authorization_seed();
+    set_authorization_seed(as, id, pid, ctas);
+
+    return as;
+}
+
+AuthorizationSeed *ReadAuthorizationSeed(sqlite3 *db, uint64_t id) {
+    char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
+    sprintf(sql,
+            "SELECT AuthorizationSeedID, PathID, AuthorizationSeedCipherText "
+            "FROM authorization_seed_table WHERE AuthorizationSeedID = %ld;",
+            id);
+
+    if (DEBUG) {
+        printf("    sql - %s\n", sql);
+    }
+
+    sqlite3_stmt *stmt = NULL;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    if (rc != SQLITE_OK) {
+        if (DEBUG) {
+            char msg[100] = "";
+            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code=%d)\n", rc);
+            errordebug(msg);
+        }
+        return NULL;
+    }
+
+    AuthorizationSeed *as = initialize_authorization_seed();
+
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW) {
+        uint64_t id = (uint64_t)sqlite3_column_int(stmt, 0);
+        uint64_t pid = (uint64_t)sqlite3_column_int(stmt, 1);
+        char *ctas = (char *)sqlite3_column_text(stmt, 2);
+
+        set_authorization_seed(as, id, pid, ctas);
+        return as;
+    } else {
+        if (DEBUG) {
+            errordebug("Some error encountered. - sqlite3_step");
+        }
+
+        finalize_authorization_seed(as);
+        return NULL;
+    }
+
+    return NULL;
+}
+
+Content *CreateContent(sqlite3 *db, char *skh, char *pka, char *ctc) {
     char sql[MAX_SIZE_SQL_CREATE_CONTENT] = "";
     sprintf(sql,
-            "INSERT INTO content_table (SharedKeyHash, ContentCipherText) "
-            "values ('%s', '%s');",
-            skh, ctc);
+            "INSERT INTO content_table (SharedKeyHash, AuthorizationPublicKey, "
+            "Nonce, ContentCipherText) values ('%s', '%s', 1, '%s');",
+            skh, pka, ctc);
 
     if (DEBUG) {
         printf("    sql - %s\n", sql);
@@ -292,7 +393,7 @@ Content *CreateContent(sqlite3 *db, char *skh, char *ctc) {
 
     uint64_t id = __exec_simple_insert_sql(db, sql);
     Content *c = initialize_content();
-    set_content(c, id, skh, ctc);
+    set_content(c, id, skh, pka, 1, ctc);
 
     return c;
 }
@@ -300,46 +401,73 @@ Content *CreateContent(sqlite3 *db, char *skh, char *ctc) {
 Content *ReadContent(sqlite3 *db, uint64_t id) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
-            "SELECT ContentID, SharedKeyHash, ContentCipherText FROM "
-            "content_table WHERE ContentID = %ld;",
+            "SELECT ContentID, SharedKeyHash, AuthorizationPublicKey, Nonce, "
+            "ContentCipherText FROM content_table WHERE ContentID = %ld;",
             id);
 
+    if (DEBUG) {
+        printf("    sql - %s\n", sql);
+    }
+
     sqlite3_stmt *stmt = NULL;
-    int return_value = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
-    if (return_value) {
-        printf("sqlite3_prepare_v2 is failed. (err_code=%d)\n", return_value);
-        exit(return_value);
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    if (rc != SQLITE_OK) {
+        if (DEBUG) {
+            char msg[100] = "";
+            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code=%d)\n", rc);
+            errordebug(msg);
+        }
+        return NULL;
     }
 
     Content *c = initialize_content();
 
-    return_value = sqlite3_step(stmt);
-    if (return_value == SQLITE_ROW) {
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW) {
         uint64_t id = (uint64_t)sqlite3_column_int(stmt, 0);
         char *skh = (char *)sqlite3_column_text(stmt, 1);
-        char *ctc = (char *)sqlite3_column_text(stmt, 2);
+        char *pka = (char *)sqlite3_column_text(stmt, 2);
+        uint64_t nonce = (uint64_t)sqlite3_column_int(stmt, 3);
+        char *ctc = (char *)sqlite3_column_text(stmt, 4);
 
-        set_content(c, id, skh, ctc);
+        set_content(c, id, skh, pka, nonce, ctc);
+        return c;
     } else {
-        printf("Some error encountered.\n");
-        exit(1);
+        if (DEBUG) {
+            errordebug("Some error encountered. - sqlite3_step");
+        }
+
+        finalize_content(c);
+        return NULL;
+    }
+}
+
+void IncrementContentNonce(sqlite3 *db, Content *c) {
+    uint64_t n = increment_content_nonce(c);
+    char sql[MAX_SIZE_SQL_PLANE_TEXT] = "";
+    sprintf(sql, "UPDATE content_table SET Nonce=%ld WHERE ContentID=%ld;", n,
+            c->id);
+
+    if (DEBUG) {
+        printf("    sql - %s\n", sql);
     }
 
-    return c;
+    __exec_simple_sql(db, sql);
 }
 
 static int callback_filter_contents_by_shared_key_hash(void *vec, int argc,
                                                        char **argv,
                                                        char **azColName) {
     if (DEBUG) {
-        printf("    select - id: %s, skh: %s, ctc: %s\n", argv[0], argv[1],
-               argv[2]);
+        printf("    select - id: %s, skh: %s, pka: %s, nonce: %s, ctc: %s\n",
+               argv[0], argv[1], argv[2], argv[3], argv[4]);
     }
 
-    Content *c = initialize_content();
-    set_content(c, AS_U64(argv[0]), argv[1], argv[2]);
-    push_content_vector((ContentVector *)vec, c);
-    finalize_content(c);
+    // Content *c = initialize_content();
+    // set_content(c, AS_U64(argv[0]), argv[1], argv[2]);
+    Content c = {AS_U64(argv[0]), argv[1], argv[2], AS_U64(argv[3]), argv[4]};
+    push_content_vector((ContentVector *)vec, &c);
+    // finalize_content(c);
 
     return 0;
 }
@@ -347,8 +475,8 @@ static int callback_filter_contents_by_shared_key_hash(void *vec, int argc,
 ContentVector *FilterBySharedKeyHash(sqlite3 *db, char *skh) {
     char sql[MAX_SIZE_SQL_CREATE_WRITE_PERMISSION] = "";
     sprintf(sql,
-            "SELECT ContentID, SharedKeyHash, ContentCipherText FROM "
-            "content_table WHERE SharedKeyHash = '%s';",
+            "SELECT ContentID, SharedKeyHash, AuthorizationPublicKey, Nonce,  "
+            "ContentCipherText FROM content_table WHERE SharedKeyHash = '%s';",
             skh);
 
     ContentVector *vec = initialize_content_vector();

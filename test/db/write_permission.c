@@ -17,7 +17,7 @@ int main() {
         exit(1);
     }
 
-    // InitalizeDatabase(db);
+    InitalizeDatabase(db);
 
     sqlite3_exec(db,
                  "INSERT INTO user_table (DataPublicKey, KeywordPublicKey, "
