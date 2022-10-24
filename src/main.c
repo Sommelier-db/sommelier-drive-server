@@ -1,6 +1,7 @@
 #include <jansson.h>
 
 #include "mongoose.h"
+#include "orm.h"
 #include "router.h"
 #include "setting.h"
 #include "util.h"
@@ -42,6 +43,8 @@ int main(void) {
         sqlite3_close(db);
         exit(1);
     }
+
+    InitalizeDatabase(db);
 
     router = initialize_router();
 

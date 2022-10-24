@@ -56,18 +56,46 @@ void api_users_view(struct mg_connection *c, struct mg_http_message *hm,
             if (uid != NULL) {
                 uint64_t user_id = (uint64_t)json_integer_value(uid);
                 User *u = ReadUser(db, user_id);
-                json_t *ju = decode_json_user(u);
-                char *dumped = json_dumps(ju, 0);
-                mg_http_reply(c, 200, "", "%s\n", dumped);
-                free(dumped);
-                finalize_user(u);
-                free(ju);
+
+                if (u != NULL) {
+                    json_t *ju = decode_json_user(u);
+                    char *dumped = json_dumps(ju, 0);
+                    mg_http_reply(c, 200, "", "%s\n", dumped);
+
+                    free(dumped);
+                    free(ju);
+                    finalize_user(u);
+                } else {
+                    __ERROR_REPLY(c);
+                }
+
                 free(uid);
+            } else {
+                __ERROR_REPLY(c);
             }
+        } else {
+            __ERROR_REPLY(c);
         }
-        __ERROR_REPLY(c);
     } else if (strcmp(method, "POST") == 0) {
-        mg_http_reply(c, 200, "", "{\"result\": \"84\"}\n");
+        json_t *body = _mg_json_body(hm->body, &status);
+
+        if (status == 0) {
+            char *dpk =
+                (char *)json_string_value(json_object_get(body, "dataPK"));
+            char *kpk =
+                (char *)json_string_value(json_object_get(body, "keywordPK"));
+
+            User *u = CreateUser(db, dpk, kpk);
+
+            mg_http_reply(c, 200, "", "%d\n", u->id);
+
+            free(dpk);
+            free(kpk);
+
+            finalize_user(u);
+        } else {
+            __ERROR_REPLY(c);
+        }
     } else {
         __ERROR_REPLY(c);
         exit(1);
