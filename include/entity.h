@@ -5,13 +5,15 @@
 
 #include "util.h"
 
-#define MAX_SIZE_PKE_PK 1024
-#define MAX_SIZE_PKSE_PK 1024
-#define MAX_SIZE_SKE_KEY 1024
-#define MAX_SIZE_HASH 1024
-#define MAX_SIZE_PKE_CT 1024
-#define MAX_SIZE_PKSE_CT 1024
-#define MAX_SIZE_SKE_CT 1024
+#define MAX_SIZE_PKE_KEY 720
+#define MAX_SIZE_PKSE_KEY 47112
+#define MAX_SIZE_HASH 32
+#define MAX_SIZE_PKE_CT 512
+#define MAX_SIZE_PKSE_KEYWORD_CT 2900000
+#define MAX_SIZE_PKSE_CONTENT_CT 4194360
+
+#define VECTOR_MAX_SIZE_DEFAULT 16
+#define VECTOR_EXTEND_RATE 2
 
 typedef struct user_table_row {
     uint64_t id;
