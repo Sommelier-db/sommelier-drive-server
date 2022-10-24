@@ -4,7 +4,7 @@ BUILD = build
 LOG = log
 DATA = data
 
-OBJECTS = $(OBJECT)/util.o $(OBJECT)/entity.o $(OBJECT)/orm.o $(OBJECT)/mongoose.o $(OBJECT)/router.o $(OBJECT)/views.o $(OBJECT)/main.o
+OBJECTS = $(OBJECT)/util.o $(OBJECT)/entity.o $(OBJECT)/orm.o $(OBJECT)/mongoose.o $(OBJECT)/router.o $(OBJECT)/view.o $(OBJECT)/main.o
 LIBRARIES = -lsqlite3 -ljansson
 
 TARGET = $(BUILD)/main

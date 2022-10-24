@@ -5,7 +5,7 @@
 #include "router.h"
 #include "setting.h"
 #include "util.h"
-#include "views.h"
+#include "view.h"
 
 static const char *s_http_addr = HTTP_SERVICE_URL;  // HTTP port
 // static const char *s_https_addr = "https://0.0.0.0:8443";  // HTTPS port
@@ -48,8 +48,7 @@ int main(void) {
 
     router = initialize_router();
 
-    push_new_route(router, "/api/main", main_view);
-    push_new_route(router, "/api/user", api_users_view);
+    push_new_route(router, "/api/user", api_user_view);
 
     // Set log level
     mg_log_set(VERBOSE ? MG_LL_VERBOSE : (DEBUG ? MG_LL_DEBUG : MG_LL_INFO));
