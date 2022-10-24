@@ -20,7 +20,7 @@ void finalize_user(User *user) {
     // FIXME: 適切なfinalizeの実装
 
     // debug_string_pointer("free user->data_public_key",
-    //     user->data_public_key);
+    //    user->data_public_key);
     free(user->data_public_key);
     // debug_string_pointer("free user->keyword_public_key",
     //     user->keyword_public_key);
@@ -57,7 +57,7 @@ void set_user_keyword_public_key(User *u, const char *pkk) {
 
 void set_user_nonce(User *u, uint64_t nonce) { u->nonce = nonce; }
 
-uint64_t increment_nonce(User *user) { return ++user->nonce; }
+uint64_t increment_nonce(User *user) { return ++(user->nonce); }
 
 json_t *decode_json_user(User *user) {
     json_t *json = json_object();

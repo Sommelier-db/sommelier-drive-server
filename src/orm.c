@@ -7,8 +7,8 @@ void __exec_simple_sql(sqlite3 *db, const char *sql) {
     int rc = sqlite3_exec(db, sql, 0, 0, &zErrMsg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "SQL error: %s\n", zErrMsg);
-        sqlite3_free(zErrMsg);
     }
+    sqlite3_free(zErrMsg);
 }
 
 uint64_t __exec_simple_insert_sql(sqlite3 *db, const char *sql) {
@@ -78,18 +78,6 @@ User *CreateUser(sqlite3 *db, char *pkd, char *pkk) {
     return u;
 }
 
-static int callback_get_user(void *row, int argc, char **argv,
-                             char **azColName) {
-    if (DEBUG) {
-        printf("    select - id: %s, pkd: %s, pkk: %s, nonce: %s\n", argv[0],
-               argv[1], argv[2], argv[3]);
-    }
-
-    set_user((User *)row, AS_U64(argv[0]), argv[1], argv[2], AS_U64(argv[3]));
-
-    return 0;
-}
-
 User *ReadUser(sqlite3 *db, uint64_t id) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
@@ -97,19 +85,43 @@ User *ReadUser(sqlite3 *db, uint64_t id) {
             "user_table WHERE UserID = %ld;",
             id);
 
-    User *row = initialize_user();
-
-    char *zErrMsg = 0;
-    int rc = sqlite3_exec(db, sql, callback_get_user, (void *)row, &zErrMsg);
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error: %s\n", zErrMsg);
-        sqlite3_free(zErrMsg);
+    if (DEBUG) {
+        printf("    sql - %s\n", sql);
     }
 
-    return row;
+    sqlite3_stmt *stmt = NULL;
+    int return_value = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    if (return_value) {
+        printf("sqlite3_prepare_v2 is failed. (err_code=%d)\n", return_value);
+        exit(return_value);
+    }
+
+    User *u = initialize_user();
+
+    return_value = sqlite3_step(stmt);
+    if (return_value == SQLITE_ROW) {
+        uint64_t id = (uint64_t)sqlite3_column_int(stmt, 0);
+        char *pkd = (char *)sqlite3_column_text(stmt, 1);
+        char *pkk = (char *)sqlite3_column_text(stmt, 2);
+        uint64_t nonce = (uint64_t)sqlite3_column_int(stmt, 3);
+
+        set_user(u, id, pkd, pkk, nonce);
+    } else {
+        printf("Some error encountered.\n");
+        exit(1);
+    }
+
+    return u;
 }
 
-void IncrementUserNonce(sqlite3 *db, User *u) {}
+void IncrementUserNonce(sqlite3 *db, User *u) {
+    uint64_t n = increment_nonce(u);
+
+    char sql[MAX_SIZE_SQL_PLANE_TEXT] = "";
+    sprintf(sql, "UPDATE user_table SET Nonce=%ld WHERE UserID=%ld;", n, u->id);
+
+    __exec_simple_sql(db, sql);
+}
 
 SharedKey *CreateSharedKey(sqlite3 *db, uint64_t pid, char *ctsk) {
     char sql[MAX_SIZE_SQL_CREATE_SHARED_KEY] = "";

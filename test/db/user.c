@@ -27,5 +27,15 @@ int main() {
         debug_user(u2);
     }
 
+    IncrementUserNonce(db, u1);
+
+    User *u3 = ReadUser(db, u1->id);
+
+    if (DEBUG) {
+        debug_user(u1);
+        debug_user(u2);
+        debug_user(u3);
+    }
+
     return 0;
 }
