@@ -8,14 +8,13 @@
 
 static const char *s_http_addr = HTTP_SERVICE_URL;  // HTTP port
 // static const char *s_https_addr = "https://0.0.0.0:8443";  // HTTPS port
-static const char *s_root_dir = ".";
 
 static Router *router;
 
 static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
     if (ev == MG_EV_HTTP_MSG) {
         struct mg_http_message *hm = (struct mg_http_message *)ev_data;
-        if (mg_http_match_uri(hm, "/api/user")) {
+        if (mg_http_match_uri(hm, "/api/hoge")) {
             char msg[256] = "";
             char method[8] = "";
             strncpy(method, hm->method.ptr, hm->method.len);
@@ -37,14 +36,14 @@ int main(void) {
     struct mg_mgr mgr;  // Event manager
 
     router = initialize_router();
-    push_new_route(router, "/api/hoge", main_view);
+    push_new_route(router, "/api/main", main_view);
+    push_new_route(router, "/api/user", api_users_view);
 
     // Set log level
     mg_log_set(VERBOSE ? MG_LL_VERBOSE : (DEBUG ? MG_LL_DEBUG : MG_LL_INFO));
 
     mg_mgr_init(&mgr);                            // Initialise event manager
     mg_http_listen(&mgr, s_http_addr, fn, NULL);  // Create HTTP listener
-    // mg_http_listen(&mgr, s_https_addr, fn, (void *)1);  // HTTPS listener
 
     for (;;) mg_mgr_poll(&mgr, 1000);  // Infinite event loop
 
