@@ -17,8 +17,6 @@ User *initialize_user() {
 }
 
 void finalize_user(User *user) {
-    // FIXME: 適切なfinalizeの実装
-
     free(user->data_public_key);
     free(user->keyword_public_key);
     free(user);
