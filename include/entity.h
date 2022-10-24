@@ -17,9 +17,9 @@
 
 typedef struct user_table_row {
     uint64_t id;
-    uint64_t nonce;
     char *data_public_key;
     char *keyword_public_key;
+    uint64_t nonce;
 } User;
 
 User *initialize_user();
@@ -64,6 +64,22 @@ void set_shared_key_id(SharedKey *, uint64_t);
 void set_shared_key_path_id(SharedKey *, uint64_t);
 void set_shared_key_share_key_cipher_text(SharedKey *, const char *);
 json_t *decode_json_shared_key(SharedKey *);
+
+typedef struct authorization_seed_table_row {
+    uint64_t id;
+    uint64_t path_id;
+    char *authorization_seed_cipher_text;
+} AuthorizationSeed;
+
+AuthorizationSeed *initialize_authorization_seed();
+void finalize_authorization_seed(AuthorizationSeed *);
+void set_authorization_seed(AuthorizationSeed *, uint64_t, uint64_t,
+                            const char *);
+void set_authorization_seed_id(AuthorizationSeed *, uint64_t);
+void set_authorization_seed_path_id(AuthorizationSeed *, uint64_t);
+void set_authorization_seed_authorization_seed_cipher_text(AuthorizationSeed *,
+                                                           const char *);
+json_t *decode_json_authorization_seed(AuthorizationSeed *);
 
 typedef struct content_table_row {
     uint64_t id;
