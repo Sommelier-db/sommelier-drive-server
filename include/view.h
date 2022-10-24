@@ -13,6 +13,7 @@
 #include "views/path.h"
 #include "views/shared_key.h"
 #include "views/user.h"
+#include "views/write_permission.h"
 
 #define __ERROR_REPLY(c) \
     (mg_http_reply(c, 500, "", "{\"msg\": \"internal error\"}\n"))

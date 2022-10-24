@@ -4,7 +4,7 @@ BUILD = build
 LOG = log
 DATA = data
 
-VIEWS = $(OBJECT)/views/user.o
+VIEWS = $(OBJECT)/views/authorization_seed.o $(OBJECT)/views/content.o $(OBJECT)/views/path.o $(OBJECT)/views/shared_key.o $(OBJECT)/views/user.o $(OBJECT)/views/write_permission.o
 OBJECTS = $(OBJECT)/util.o $(OBJECT)/entity.o $(OBJECT)/orm.o $(OBJECT)/mongoose.o $(OBJECT)/router.o $(OBJECT)/view.o $(VIEWS) $(OBJECT)/main.o
 LIBRARIES = -lsqlite3 -ljansson
 
