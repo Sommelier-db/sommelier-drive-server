@@ -1,12 +1,15 @@
 #pragma once
 
+#include <sqlite3.h>
+
 #include "mongoose.h"
 #include "util.h"
 
 #define ROUTER_DEFAULT_ROUTES 16
 #define ROUTES_EXTEND_RATE 2
 
-typedef void (*Route)(struct mg_connection *, struct mg_http_message *);
+typedef void (*Route)(struct mg_connection *, struct mg_http_message *,
+                      struct sqlite3 *);
 
 typedef struct router {
     size_t max_size;

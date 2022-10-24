@@ -10,11 +10,12 @@ static const char *s_http_addr = HTTP_SERVICE_URL;  // HTTP port
 // static const char *s_https_addr = "https://0.0.0.0:8443";  // HTTPS port
 
 static Router *router;
+static sqlite3 *db = NULL;
 
 static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
     if (ev == MG_EV_HTTP_MSG) {
         struct mg_http_message *hm = (struct mg_http_message *)ev_data;
-        if (mg_http_match_uri(hm, "/api/hoge")) {
+        if (mg_http_match_uri(hm, "/api/test")) {
             char msg[256] = "";
             char method[8] = "";
             strncpy(method, hm->method.ptr, hm->method.len);
@@ -25,7 +26,7 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
 
         for (size_t i = 0; i < router->length; i++) {
             if (mg_http_match_uri(hm, get_uri(router, i))) {
-                get_route(router, i)(c, hm);
+                get_route(router, i)(c, hm, db);
             }
         }
     }
@@ -35,7 +36,15 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
 int main(void) {
     struct mg_mgr mgr;  // Event manager
 
+    int err = sqlite3_open(DBFILE, &db);
+    if (err) {
+        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        exit(1);
+    }
+
     router = initialize_router();
+
     push_new_route(router, "/api/main", main_view);
     push_new_route(router, "/api/user", api_users_view);
 
