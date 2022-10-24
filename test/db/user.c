@@ -17,7 +17,7 @@ int main() {
         exit(1);
     }
 
-    // InitalizeDatabase(db);
+    InitalizeDatabase(db);
 
     User *u1 = CreateUser(db, "pkd1", "pkk1");
     User *u2 = ReadUser(db, u1->id);
