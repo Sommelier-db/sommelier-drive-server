@@ -19,9 +19,6 @@ int main() {
 
     InitalizeDatabase(db);
 
-    // User *u1 = CreateUser(db, "pkd1", "pkk1");
-    // User *u2 = ReadUser(db, u1->id);
-
     sqlite3_exec(db,
                  "INSERT INTO user_table (DataPublicKey, KeywordPublicKey, "
                  "Nonce) values ('dpk1', 'kpk1', 1)",

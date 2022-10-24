@@ -159,12 +159,12 @@ SharedKey *ReadSharedKey(sqlite3 *db, uint64_t id) {
     return row;
 }
 
-Content *CreateContent(sqlite3 *, char *, char *);
+Content *CreateContent(sqlite3 *db, char *skh, char *ctc);
 
-Content *ReadContent(sqlite3 *, uint64_t);
+Content *ReadContent(sqlite3 *db, uint64_t id);
 
-ContentVector *FilterBySharedKeyHash(sqlite3 *, char *);
+ContentVector *FilterBySharedKeyHash(sqlite3 *db, char *skh);
 
-WritePermission *CreateWritePermission(sqlite3 *, uint64_t, uint64_t);
+WritePermission *CreateWritePermission(sqlite3 *db, uint64_t pid, uint64_t uid);
 
-WritePermission *ReadWritePermission(sqlite3 *, uint64_t);
+WritePermission *ReadWritePermission(sqlite3 *db, uint64_t id);
