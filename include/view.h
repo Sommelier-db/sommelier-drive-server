@@ -8,14 +8,13 @@
 #include "orm.h"
 #include "router.h"
 #include "util.h"
+#include "views/user.h"
+
+#define __ERROR_REPLY(c) \
+    (mg_http_reply(c, 500, "", "{\"msg\": \"internal error\"}\n"))
 
 char *request_method(struct mg_str);
-int json_has_column(json_t *, const char *, int);
-
-// GET, POST /api/user
-json_t *get_api_user_request(struct mg_str s);
-json_t *post_api_user_request(struct mg_str s);
-void api_user_view(struct mg_connection *, struct mg_http_message *, sqlite3 *);
+int json_has_key(json_t *, const char *, int);
 
 // GET, POST /api/file-path
 json_t *get_api_path_request(struct mg_str s);
