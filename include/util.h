@@ -22,7 +22,7 @@
 
 #define AS_U64(s) ((uint64_t)atoi(s))
 
-char *initialize_string(const char *field);
+char *initialize_string(size_t, const char *field);
 char *safe_string_copy(char *dst, const char *src);
 
 #if DEBUG

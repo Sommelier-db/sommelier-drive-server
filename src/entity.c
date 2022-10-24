@@ -10,8 +10,10 @@ User *initialize_user() {
         exit(1);
     }
 
-    u->data_public_key = initialize_string("User::data_public_key");
-    u->keyword_public_key = initialize_string("User::keyword_public_key");
+    u->data_public_key =
+        initialize_string(MAX_SIZE_PKE_KEY, "User::data_public_key");
+    u->keyword_public_key =
+        initialize_string(MAX_SIZE_PKSE_KEY, "User::keyword_public_key");
 
     return u;
 }
@@ -90,9 +92,12 @@ Path *initialize_path() {
         exit(1);
     }
 
-    p->permission_hash = initialize_string("Path::permission_hash");
-    p->data_cipher_text = initialize_string("Path::data_cipher_text");
-    p->keyword_cipher_text = initialize_string("Path::keyword_cipher_text");
+    p->permission_hash =
+        initialize_string(MAX_SIZE_HASH, "Path::permission_hash");
+    p->data_cipher_text =
+        initialize_string(MAX_SIZE_PKE_CT, "Path::data_cipher_text");
+    p->keyword_cipher_text = initialize_string(MAX_SIZE_PKSE_KEYWORD_CT,
+                                               "Path::keyword_cipher_text");
 
     return p;
 }
@@ -258,7 +263,7 @@ SharedKey *initialize_shared_key() {
     }
 
     sk->shared_key_cipher_text =
-        initialize_string("SharedKey::shared_key_cipher_text");
+        initialize_string(MAX_SIZE_PKE_CT, "SharedKey::shared_key_cipher_text");
 
     return sk;
 }
@@ -323,8 +328,10 @@ Content *initialize_content() {
         exit(1);
     }
 
-    c->shared_key_hash = initialize_string("Content::shared_key_hash");
-    c->content_cipher_text = initialize_string("Content::content_cipher_text");
+    c->shared_key_hash =
+        initialize_string(MAX_SIZE_HASH, "Content::shared_key_hash");
+    c->content_cipher_text = initialize_string(MAX_SIZE_PKSE_CONTENT_CT,
+                                               "Content::content_cipher_text");
 
     return c;
 }
