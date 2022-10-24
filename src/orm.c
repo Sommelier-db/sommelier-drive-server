@@ -53,9 +53,6 @@ void InitalizeDatabase(sqlite3 *db) {
         "PRAGMA foreign_keys=true;",  // (6) enable forign key
     };
 
-    int rc;
-    char *zErrMsg = 0;
-
     for (int i = 0; i < SOMMELIER_DRIVE_INITIALIZE_SQL; i++) {
         __exec_simple_sql(db, sql[i]);
     }
@@ -73,24 +70,94 @@ User *CreateUser(sqlite3 *db, char *pkd, char *pkk) {
     }
 
     uint64_t id = __exec_simple_insert_sql(db, sql);
-    User *u = initialize_user(id, pkd, pkk);
+    User *u = initialize_user();
+    set_user(u, id, pkd, pkk, 1);
 
     return u;
 }
 
+static int callback_get_user(void *row, int argc, char **argv,
+                             char **azColName) {
+    if (DEBUG) {
+        printf("    select - id: %s, pkd: %s, pkk: %s, nonce: %s\n", argv[0],
+               argv[1], argv[2], argv[3]);
+    }
+
+    set_user((User *)row, AS_U64(argv[0]), argv[1], argv[2], AS_U64(argv[3]));
+
+    return 0;
+}
+
 User *ReadUser(sqlite3 *db, uint64_t id) {
-    char sql[MAX_SIZE_SQL_READ_USER] = "";
+    char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
             "SELECT UserID, DataPublicKey, KeywordPublicKey, Nonce FROM "
-            "user_table WHERE UserID = %d;",
+            "user_table WHERE UserID = %ld;",
             id);
+
+    User *row = initialize_user();
+
+    char *zErrMsg = 0;
+    int rc = sqlite3_exec(db, sql, callback_get_user, (void *)row, &zErrMsg);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }
+
+    return row;
 }
 
 void IncrementUserNonce(sqlite3 *, User *);
 
-SharedKey *CreateSharedKey(sqlite3 *, uint64_t, char *);
+SharedKey *CreateSharedKey(sqlite3 *db, uint64_t pid, char *ctsk) {
+    char sql[MAX_SIZE_SQL_CREATE_SHARED_KEY] = "";
+    sprintf(sql,
+            "INSERT INTO shared_key_table (PathID, SharedKeyCipherText) values "
+            "(%ld, '%s')",
+            pid, ctsk);
 
-SharedKey *ReadSharedKey(sqlite3 *, uint64_t);
+    if (DEBUG) {
+        printf("    sql - %s\n", sql);
+    }
+
+    uint64_t id = __exec_simple_insert_sql(db, sql);
+    SharedKey *sk = initialize_shared_key();
+    set_shared_key(sk, id, pid, ctsk);
+
+    return sk;
+}
+
+static int callback_get_shared_key(void *row, int argc, char **argv,
+                                   char **azColName) {
+    if (DEBUG) {
+        printf("    select - id: %s, pid: %s, ctsk: %s\n", argv[0], argv[1],
+               argv[2]);
+    }
+
+    set_shared_key((SharedKey *)row, AS_U64(argv[0]), AS_U64(argv[1]), argv[2]);
+
+    return 0;
+}
+
+SharedKey *ReadSharedKey(sqlite3 *db, uint64_t id) {
+    char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
+    sprintf(sql,
+            "SELECT SharedKeyID, PathID, SharedKeyCipherText FROM "
+            "shared_key_table WHERE SharedKeyID = %ld;",
+            id);
+
+    SharedKey *row = initialize_shared_key();
+
+    char *zErrMsg = 0;
+    int rc =
+        sqlite3_exec(db, sql, callback_get_shared_key, (void *)row, &zErrMsg);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }
+
+    return row;
+}
 
 Content *CreateContent(sqlite3 *, char *, char *);
 

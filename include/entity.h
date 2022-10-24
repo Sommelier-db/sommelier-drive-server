@@ -14,9 +14,9 @@
 
 typedef struct user_table_row {
     uint64_t id;
+    uint64_t nonce;
     char *data_public_key;
     char *keyword_public_key;
-    uint64_t nonce;
 } User;
 
 User *initialize_user();

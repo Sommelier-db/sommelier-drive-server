@@ -9,7 +9,7 @@ void test_entity_path_vector();
 void test_entity_content_vector();
 
 int main() {
-    // test_entity_user();
+    test_entity_user();
 
     // FIXME: なぜかこいつらだけ失敗する
     // test_entity_path();
@@ -31,7 +31,6 @@ int main() {
 void test_entity_user() {
     printf("test_entity_user: User API usage.\n");
 
-    // User *u = initialize_user(1, "pkd01", "pkk01");
     User *u = initialize_user();
     set_user(u, 1, "pkd01", "pkk02", 1);
     if (DEBUG) {

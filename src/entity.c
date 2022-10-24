@@ -21,10 +21,10 @@ void finalize_user(User *user) {
 
     // debug_string_pointer("free user->data_public_key",
     //     user->data_public_key);
-    // free(user->data_public_key);
+    free(user->data_public_key);
     // debug_string_pointer("free user->keyword_public_key",
     //     user->keyword_public_key);
-    // free(user->keyword_public_key);
+    free(user->keyword_public_key);
     // debug_void_pointer("free user", (void *)user);
     free(user);
 }

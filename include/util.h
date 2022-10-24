@@ -25,6 +25,8 @@
 #define __STRING_COPY(__DST__, __SRC__) \
     (strncpy(__DST__, __SRC__, strlen(__SRC__) + 1))
 
+#define AS_U64(s) ((uint64_t)atoi(s))
+
 char *initialize_string(const char *field);
 char *safe_string_copy(char *dst, const char *src);
 
