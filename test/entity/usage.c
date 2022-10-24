@@ -11,8 +11,7 @@ void test_entity_content_vector();
 int main() {
     test_entity_user();
 
-    // FIXME: なぜかこいつらだけ失敗する
-    // test_entity_path();
+    test_entity_path();
 
     test_entity_shared_key();
 
@@ -20,8 +19,7 @@ int main() {
 
     test_entity_write_permission();
 
-    // FIXME: なぜかこいつらだけ失敗する
-    // test_entity_path_vector();
+    test_entity_path_vector();
 
     test_entity_content_vector();
 

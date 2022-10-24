@@ -19,13 +19,8 @@ User *initialize_user() {
 void finalize_user(User *user) {
     // FIXME: 適切なfinalizeの実装
 
-    // debug_string_pointer("free user->data_public_key",
-    //    user->data_public_key);
     free(user->data_public_key);
-    // debug_string_pointer("free user->keyword_public_key",
-    //     user->keyword_public_key);
     free(user->keyword_public_key);
-    // debug_void_pointer("free user", (void *)user);
     free(user);
 }
 
@@ -125,19 +120,6 @@ void set_path_id(Path *p, uint64_t id) { p->id = id; }
 void set_path_user_id(Path *p, uint64_t user_id) { p->user_id = user_id; }
 
 void set_path_permission_hash(Path *p, const char *ph) {
-    if (VERBOSE) {
-        debug_string_pointer("set_path_permission_hash: p->ph",
-                             p->permission_hash);
-        debug_string_pointer("set_path_permission_hash: ph", ph);
-
-        char *dst = __STRING_COPY(p->permission_hash, ph);
-
-        debug_string_pointer("set_path_permission_hash2: dst", dst);
-        debug_string_pointer("set_path_permission_hash2: p->ph",
-                             p->permission_hash);
-        debug_string_pointer("set_path_permission_hash2: ph", ph);
-    }
-
     if (ph != NULL) {
         p->permission_hash = safe_string_copy(p->permission_hash, ph);
     } else if (DEBUG) {

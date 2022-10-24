@@ -4,7 +4,9 @@ char *initialize_string(const char *field) {
     char *p = INITIALIZE_STRING(1024);
 
     if (VERBOSE) {
-        debug_string_pointer("p (initialize_string)", p);
+        char _msg[128] = "";
+        sprintf(_msg, "p (initialize_string: %s)", field);
+        debug_string_pointer(_msg, p);
     }
 
     if (p == NULL) {
@@ -40,13 +42,16 @@ char *safe_string_copy(char *dst, const char *src) {
     //     dst = (char *)realloc(dst, (strlen(src) + 1) * sizeof(char));
     // }
 
-    return __STRING_COPY(dst, src);
+    char *ret = __STRING_COPY(dst, src);
+    if (VERBOSE) {
+        debug_string_pointer("ret (safe_string_copy)", ret);
+    }
+    return ret;
 }
 
 #if DEBUG
 void debug_string_pointer(const char *field, const char *s) {
-    printf("[DEBUG] debug char *: %s = \"%s\" (%p, size: %ld)\n", field, s, s,
-           sizeof s);
+    printf("[DEBUG] debug char *: %s = \"%s\" (@ %p)\n", field, s, s);
     fflush(stdout);
 }
 
