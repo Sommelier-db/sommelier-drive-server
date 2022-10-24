@@ -52,7 +52,7 @@ void set_user_keyword_public_key(User *u, const char *pkk) {
 
 void set_user_nonce(User *u, uint64_t nonce) { u->nonce = nonce; }
 
-uint64_t increment_nonce(User *user) { return ++(user->nonce); }
+uint64_t increment_user_nonce(User *user) { return ++(user->nonce); }
 
 json_t *decode_json_user(User *user) {
     json_t *json = json_object();
@@ -318,6 +318,78 @@ json_t *decode_json_shared_key(SharedKey *sk) {
     return json;
 }
 
+// AuthorizationSeed API
+
+AuthorizationSeed *initialize_authorization_seed() {
+    AuthorizationSeed *as = INITIALIZE(AuthorizationSeed);
+
+    if (as == NULL) {
+        errordebug("Memory allocation is failed. - AuthorizationSeed");
+        exit(1);
+    }
+
+    as->authorization_seed_cipher_text = initialize_string(
+        MAX_SIZE_PKE_CT, "AuthorizationSeed::authorization_seed_cipher_text");
+
+    return as;
+}
+
+void finalize_authorization_seed(AuthorizationSeed *as) {
+    free(as->authorization_seed_cipher_text);
+    free(as);
+}
+
+void set_authorization_seed(AuthorizationSeed *as, uint64_t id, uint64_t pid,
+                            const char *ctas) {
+    set_authorization_seed_id(as, id);
+    set_authorization_seed_path_id(as, pid);
+    set_authorization_seed_authorization_seed_cipher_text(as, ctas);
+}
+
+void set_authorization_seed_id(AuthorizationSeed *as, uint64_t id) {
+    as->id = id;
+}
+
+void set_authorization_seed_path_id(AuthorizationSeed *as, uint64_t pid) {
+    as->path_id = pid;
+}
+
+void set_authorization_seed_authorization_seed_cipher_text(
+    AuthorizationSeed *as, const char *ctas) {
+    if (ctas != NULL) {
+        as->authorization_seed_cipher_text =
+            safe_string_copy(as->authorization_seed_cipher_text, ctas);
+    } else if (DEBUG) {
+        echodebug(
+            "Arg ctas is NULL. - "
+            "set_authorization_seed_authorization_seed_cipher_text");
+    }
+}
+
+json_t *decode_json_authorization_seed(AuthorizationSeed *as) {
+    json_t *json = json_object();
+
+    if (json_object_set(json, "id", json_integer(as->id)) < 0) {
+        errordebug("Setting JSON is failed. - AuthorizationSeed::id");
+        exit(1);
+    }
+
+    if (json_object_set(json, "path_id", json_integer(as->path_id)) < 0) {
+        errordebug("Setting JSON is failed. - AuthorizationSeed::path_id");
+        exit(1);
+    }
+
+    if (json_object_set(json, "authorization_seed_cipher_text",
+                        json_string(as->authorization_seed_cipher_text)) < 0) {
+        errordebug(
+            "Setting JSON is failed. - "
+            "AuthorizationSeed::authorization_seed_cipher_text");
+        exit(1);
+    }
+
+    return json;
+}
+
 // Content API
 
 Content *initialize_content() {
@@ -330,6 +402,8 @@ Content *initialize_content() {
 
     c->shared_key_hash =
         initialize_string(MAX_SIZE_HASH, "Content::shared_key_hash");
+    c->authorization_public_key = initialize_string(
+        MAX_SIZE_PKE_KEY, "Content::authorization_public_key");
     c->content_cipher_text = initialize_string(MAX_SIZE_PKSE_CONTENT_CT,
                                                "Content::content_cipher_text");
 
@@ -338,13 +412,17 @@ Content *initialize_content() {
 
 void finalize_content(Content *content) {
     free(content->shared_key_hash);
+    free(content->authorization_public_key);
     free(content->content_cipher_text);
     free(content);
 }
 
-void set_content(Content *c, u_int64_t id, const char *skh, const char *ctc) {
+void set_content(Content *c, uint64_t id, const char *skh, const char *pka,
+                 uint64_t nonce, const char *ctc) {
     set_content_id(c, id);
     set_content_shared_key_hash(c, skh);
+    set_content_authorization_public_key(c, pka);
+    set_content_nonce(c, nonce);
     set_content_content_cipher_text(c, ctc);
 }
 
@@ -358,6 +436,17 @@ void set_content_shared_key_hash(Content *c, const char *skh) {
     }
 }
 
+void set_content_authorization_public_key(Content *c, const char *pka) {
+    if (pka != NULL) {
+        c->authorization_public_key =
+            safe_string_copy(c->authorization_public_key, pka);
+    } else if (DEBUG) {
+        echodebug("Arg pka is NULL. - set_content_authorization_public_key");
+    }
+}
+
+void set_content_nonce(Content *c, uint64_t nonce) { c->nonce = nonce; }
+
 void set_content_content_cipher_text(Content *c, const char *ctc) {
     if (ctc != NULL) {
         c->content_cipher_text = safe_string_copy(c->content_cipher_text, ctc);
@@ -365,6 +454,8 @@ void set_content_content_cipher_text(Content *c, const char *ctc) {
         echodebug("Arg ctc is NULL. - set_content_content_cipher_text");
     }
 }
+
+uint64_t increment_content_nonce(Content *c) { return ++(c->nonce); }
 
 json_t *decode_json_content(Content *c) {
     json_t *json = json_object();
@@ -430,6 +521,7 @@ size_t push_content_vector(ContentVector *vec, Content *content) {
     vec->buf[vec->length] = initialize_content();
 
     set_content(vec->buf[vec->length], content->id, content->shared_key_hash,
+                content->authorization_public_key, content->nonce,
                 content->content_cipher_text);
 
     return ++vec->length;

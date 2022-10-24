@@ -29,7 +29,7 @@ void set_user_id(User *, uint64_t);
 void set_user_data_public_key(User *, const char *);
 void set_user_keyword_public_key(User *, const char *);
 void set_user_nonce(User *, uint64_t);
-uint64_t increment_nonce(User *);
+uint64_t increment_user_nonce(User *);
 json_t *decode_json_user(User *);
 
 typedef struct path_table_row {
@@ -84,15 +84,21 @@ json_t *decode_json_authorization_seed(AuthorizationSeed *);
 typedef struct content_table_row {
     uint64_t id;
     char *shared_key_hash;
+    char *authorization_public_key;
+    uint64_t nonce;
     char *content_cipher_text;
 } Content;
 
 Content *initialize_content();
 void finalize_content(Content *);
-void set_content(Content *, uint64_t, const char *, const char *);
+void set_content(Content *, uint64_t, const char *, const char *, uint64_t,
+                 const char *);
 void set_content_id(Content *, uint64_t);
 void set_content_shared_key_hash(Content *, const char *);
+void set_content_authorization_public_key(Content *, const char *);
+void set_content_nonce(Content *, uint64_t);
 void set_content_content_cipher_text(Content *, const char *);
+uint64_t increment_content_nonce(Content *);
 json_t *decode_json_content(Content *);
 
 typedef struct write_permission_table_row {

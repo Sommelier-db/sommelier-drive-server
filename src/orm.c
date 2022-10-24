@@ -124,7 +124,7 @@ User *ReadUser(sqlite3 *db, uint64_t id) {
 }
 
 void IncrementUserNonce(sqlite3 *db, User *u) {
-    uint64_t n = increment_nonce(u);
+    uint64_t n = increment_user_nonce(u);
     char sql[MAX_SIZE_SQL_PLANE_TEXT] = "";
     sprintf(sql, "UPDATE user_table SET Nonce=%ld WHERE UserID=%ld;", n, u->id);
     __exec_simple_sql(db, sql);
