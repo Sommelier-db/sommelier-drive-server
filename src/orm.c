@@ -1,5 +1,7 @@
 #include "orm.h"
 
+// TODO: execのerror-handling.
+
 void __exec_simple_sql(sqlite3 *db, const char *sql) {
     char *zErrMsg = 0;
     int rc = sqlite3_exec(db, sql, 0, 0, &zErrMsg);
@@ -107,7 +109,7 @@ User *ReadUser(sqlite3 *db, uint64_t id) {
     return row;
 }
 
-void IncrementUserNonce(sqlite3 *, User *);
+void IncrementUserNonce(sqlite3 *db, User *u) {}
 
 SharedKey *CreateSharedKey(sqlite3 *db, uint64_t pid, char *ctsk) {
     char sql[MAX_SIZE_SQL_CREATE_SHARED_KEY] = "";
@@ -163,7 +165,7 @@ Content *CreateContent(sqlite3 *db, char *skh, char *ctc) {
     char sql[MAX_SIZE_SQL_CREATE_CONTENT] = "";
     sprintf(sql,
             "INSERT INTO content_table (SharedKeyHash, ContentCipherText) "
-            "values ('%s', '%s')",
+            "values ('%s', '%s');",
             skh, ctc);
 
     if (DEBUG) {
@@ -208,7 +210,41 @@ Content *ReadContent(sqlite3 *db, uint64_t id) {
     return row;
 }
 
-ContentVector *FilterBySharedKeyHash(sqlite3 *db, char *skh);
+static int callback_filter_contents_by_shared_key_hash(void *vec, int argc,
+                                                       char **argv,
+                                                       char **azColName) {
+    if (DEBUG) {
+        printf("    select - id: %s, skh: %s, ctc: %s\n", argv[0], argv[1],
+               argv[2]);
+    }
+
+    Content *c = initialize_content();
+    set_content(c, AS_U64(argv[0]), argv[1], argv[2]);
+    push_content_vector((ContentVector *)vec, c);
+    finalize_content(c);
+
+    return 0;
+}
+
+ContentVector *FilterBySharedKeyHash(sqlite3 *db, char *skh) {
+    char sql[MAX_SIZE_SQL_CREATE_WRITE_PERMISSION] = "";
+    sprintf(sql,
+            "SELECT ContentID, SharedKeyHash, ContentCipherText FROM "
+            "content_table WHERE SharedKeyHash = '%s';",
+            skh);
+
+    ContentVector *vec = initialize_content_vector();
+    char *zErrMsg = 0;
+    int rc = sqlite3_exec(db, sql, callback_filter_contents_by_shared_key_hash,
+                          (void *)vec, &zErrMsg);
+
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }
+
+    return vec;
+}
 
 WritePermission *CreateWritePermission(sqlite3 *db, uint64_t pid,
                                        uint64_t uid) {
