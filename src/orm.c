@@ -60,6 +60,8 @@ void InitalizeDatabase(sqlite3 *db) {
     }
 }
 
+// Create User API.
+
 User *CreateUser(sqlite3 *db, char *pkd, char *pkk) {
     char sql[MAX_SIZE_SQL_CREATE_USER] = "";
     sprintf(sql,
@@ -122,6 +124,106 @@ void IncrementUserNonce(sqlite3 *db, User *u) {
 
     __exec_simple_sql(db, sql);
 }
+
+// Create Path API.
+
+Path *CreatePath(sqlite3 *db, uint64_t uid, char *ph, char *ctd, char *ctk) {
+    char sql[MAX_SIZE_SQL_CREATE_PATH] = "";
+    sprintf(sql,
+            "INSERT INTO path_table (UserID, PermissionHash, DataCipherText, "
+            "KeywordCipherText) values (%ld, '%s', '%s', '%s')",
+            uid, ph, ctd, ctk);
+
+    if (DEBUG) {
+        printf("    sql - %s\n", sql);
+    }
+
+    uint64_t id = __exec_simple_insert_sql(db, sql);
+    Path *p = initialize_path();
+    set_path(p, id, uid, ph, ctd, ctk);
+
+    return p;
+}
+
+Path *ReadPath(sqlite3 *db, uint64_t id) {
+    char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
+    sprintf(sql,
+            "SELECT PathID, UserID, PermissionHash, DataCipherText, "
+            "KeywordCipherText FROM path_table WHERE PathID = %ld;",
+            id);
+
+    if (DEBUG) {
+        printf("    sql - %s\n", sql);
+    }
+
+    sqlite3_stmt *stmt = NULL;
+    int return_value = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    if (return_value) {
+        printf("sqlite3_prepare_v2 is failed. (err_code=%d)\n", return_value);
+        exit(return_value);
+    }
+
+    Path *p = initialize_path();
+
+    return_value = sqlite3_step(stmt);
+    if (return_value == SQLITE_ROW) {
+        uint64_t id = (uint64_t)sqlite3_column_int(stmt, 0);
+        uint64_t uid = (uint64_t)sqlite3_column_int(stmt, 1);
+        char *ph = (char *)sqlite3_column_text(stmt, 2);
+        char *ctd = (char *)sqlite3_column_text(stmt, 3);
+        char *ctk = (char *)sqlite3_column_text(stmt, 4);
+
+        set_path(p, id, uid, ph, ctd, ctk);
+    } else {
+        printf("Some error encountered.\n");
+        exit(1);
+    }
+
+    return p;
+}
+
+static int callback_filter_path_by_permission_hash(void *vec, int argc,
+                                                   char **argv,
+                                                   char **azColName) {
+    if (DEBUG) {
+        printf("    select - id: %s, skh: %s, ctc: %s\n", argv[0], argv[1],
+               argv[2]);
+    }
+
+    Path *p = initialize_path();
+    set_path(p, AS_U64(argv[0]), AS_U64(argv[1]), argv[2], argv[3], argv[4]);
+    push_path_vector((PathVector *)vec, p);
+    finalize_path(p);
+
+    return 0;
+}
+
+PathVector *FilterByPermissionHash(sqlite3 *db, char *ph) {
+    char sql[MAX_SIZE_SQL_FILTER_BY_PREMISSION_HASH] = "";
+    sprintf(sql,
+            "SELECT PathID, UserID, PermissionHash, DataCipherText, "
+            "KeywordCipherText FROM path_table WHERE PermissionHash = '%s';",
+            ph);
+
+    if (DEBUG) {
+        printf("    sql - %s\n", sql);
+    }
+
+    PathVector *vec = initialize_path_vector();
+    char *zErrMsg = 0;
+    int rc = sqlite3_exec(db, sql, callback_filter_path_by_permission_hash,
+                          (void *)vec, &zErrMsg);
+
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }
+
+    return vec;
+}
+
+// depends on Sommelier-DB
+PathVector *SearchEncryptedPath(sqlite3 *db, uint64_t, char *);
 
 SharedKey *CreateSharedKey(sqlite3 *db, uint64_t pid, char *ctsk) {
     char sql[MAX_SIZE_SQL_CREATE_SHARED_KEY] = "";
