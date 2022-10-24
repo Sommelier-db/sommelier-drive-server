@@ -40,7 +40,7 @@ void InitalizeDatabase(sqlite3 *db) {
             SharedKeyCipherText TEXT NOT NULL,\
             CONSTRAINT path_id_ref_to_path_table FOREIGN KEY (PathID) REFERENCES path_table (PathID)\
         );",                          // (3) create shared_key table
-        "CREATE TABLE authorization_seed (\
+        "CREATE TABLE authorization_seed_table (\
             AuthorizationSeedID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
             PathID INTEGER NOT NULL,\
             AuthorizationSeedCipherText TEXT NOT NULL,\
@@ -317,6 +317,69 @@ SharedKey *ReadSharedKey(sqlite3 *db, uint64_t id) {
     return NULL;
 }
 
+AuthorizationSeed *CreateAuthorizationSeed(sqlite3 *db, uint64_t pid,
+                                           char *ctas) {
+    char sql[MAX_SIZE_SQL_CREATE_AUTHORIZATION_SEED] = "";
+    sprintf(sql,
+            "INSERT INTO authorization_seed_table (PathID, "
+            "AuthorizationSeedCipherText) values (%ld, '%s');",
+            pid, ctas);
+
+    if (DEBUG) {
+        printf("    sql - %s\n", sql);
+    }
+
+    uint64_t id = __exec_simple_insert_sql(db, sql);
+    AuthorizationSeed *as = initialize_authorization_seed();
+    set_authorization_seed(as, id, pid, ctas);
+
+    return as;
+}
+
+AuthorizationSeed *ReadAuthorizationSeed(sqlite3 *db, uint64_t id) {
+    char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
+    sprintf(sql,
+            "SELECT AuthorizationSeedID, PathID, AuthorizationSeedCipherText "
+            "FROM authorization_seed_table WHERE AuthorizationSeedID = %ld;",
+            id);
+
+    if (DEBUG) {
+        printf("    sql - %s\n", sql);
+    }
+
+    sqlite3_stmt *stmt = NULL;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    if (rc != SQLITE_OK) {
+        if (DEBUG) {
+            char msg[100] = "";
+            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code=%d)\n", rc);
+            errordebug(msg);
+        }
+        return NULL;
+    }
+
+    AuthorizationSeed *as = initialize_authorization_seed();
+
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW) {
+        uint64_t id = (uint64_t)sqlite3_column_int(stmt, 0);
+        uint64_t pid = (uint64_t)sqlite3_column_int(stmt, 1);
+        char *ctas = (char *)sqlite3_column_text(stmt, 2);
+
+        set_authorization_seed(as, id, pid, ctas);
+        return as;
+    } else {
+        if (DEBUG) {
+            errordebug("Some error encountered. - sqlite3_step");
+        }
+
+        finalize_authorization_seed(as);
+        return NULL;
+    }
+
+    return NULL;
+}
+
 Content *CreateContent(sqlite3 *db, char *skh, char *pka, char *ctc) {
     char sql[MAX_SIZE_SQL_CREATE_CONTENT] = "";
     sprintf(sql,
@@ -377,6 +440,19 @@ Content *ReadContent(sqlite3 *db, uint64_t id) {
         finalize_content(c);
         return NULL;
     }
+}
+
+void IncrementContentNonce(sqlite3 *db, Content *c) {
+    uint64_t n = increment_content_nonce(c);
+    char sql[MAX_SIZE_SQL_PLANE_TEXT] = "";
+    sprintf(sql, "UPDATE content_table SET Nonce=%ld WHERE ContentID=%ld;", n,
+            c->id);
+
+    if (DEBUG) {
+        printf("    sql - %s\n", sql);
+    }
+
+    __exec_simple_sql(db, sql);
 }
 
 static int callback_filter_contents_by_shared_key_hash(void *vec, int argc,

@@ -46,9 +46,15 @@ SharedKey *CreateSharedKey(sqlite3 *, uint64_t, char *);
 
 SharedKey *ReadSharedKey(sqlite3 *, uint64_t);
 
+AuthorizationSeed *CreateAuthorizationSeed(sqlite3 *, uint64_t, char *);
+
+AuthorizationSeed *ReadAuthorizationSeed(sqlite3 *, uint64_t);
+
 Content *CreateContent(sqlite3 *, char *, char *, char *);
 
 Content *ReadContent(sqlite3 *, uint64_t);
+
+void IncrementContentNonce(sqlite3 *, Content *);
 
 ContentVector *FilterBySharedKeyHash(sqlite3 *, char *);
 
