@@ -38,7 +38,7 @@ void finalize_router(Router *r) {
 
 size_t push_new_route(Router *r, const char *uri, Route fn) {
     if (r->length == r->max_size) {
-        if (DEBUG) {
+        if (VERBOSE) {
             echodebug("resize_path_vector() called. - push_new_route()");
         }
 

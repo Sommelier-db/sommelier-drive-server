@@ -1,3 +1,5 @@
+#pragma once
+
 #include "mongoose.h"
 #include "util.h"
 
