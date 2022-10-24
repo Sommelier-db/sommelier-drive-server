@@ -1,4 +1,20 @@
-#include "router.h"
+#include "util.h"
+
+typedef void (*Func)(int);
+
+typedef struct router {
+    size_t max_size;
+    size_t length;
+    Func *routes;
+    char **uris;
+} Router;
+
+Router *initialize_router();
+void finalize_router(Router *);
+size_t push_new_route(Router *, const char *, Func);
+size_t resize_router(Router *);
+char *get_uri(Router *, size_t);
+Func get_route(Router *, size_t);
 
 Router *initialize_router() {
     Router *r = INITIALIZE(Router);
@@ -9,16 +25,16 @@ Router *initialize_router() {
     }
 
     r->length = 0;
-    r->max_size = ROUTER_DEFAULT_ROUTES;
+    r->max_size = 16;
 
-    r->routes = INITIALIZE_SIZE(Route, ROUTER_DEFAULT_ROUTES);
+    r->routes = INITIALIZE_SIZE(Func, 16);
 
     if (r->routes == NULL) {
         errordebug("Memory allocation is failed. - Router::routes");
         exit(1);
     }
 
-    r->uris = INITIALIZE_SIZE(char *, ROUTER_DEFAULT_ROUTES);
+    r->uris = INITIALIZE_SIZE(char *, 16);
 
     if (r->uris == NULL) {
         errordebug("Memory allocation is failed. - Router::uris");
@@ -36,7 +52,7 @@ void finalize_router(Router *r) {
     free(r);
 }
 
-size_t push_new_route(Router *r, const char *uri, Route fn) {
+size_t push_new_route(Router *r, const char *uri, Func fn) {
     if (r->length == r->max_size) {
         if (DEBUG) {
             echodebug("resize_path_vector() called. - push_new_route()");
@@ -60,10 +76,10 @@ size_t push_new_route(Router *r, const char *uri, Route fn) {
 }
 
 size_t resize_router(Router *r) {
-    size_t new_size = ROUTES_EXTEND_RATE * r->max_size;
+    size_t new_size = 2 * r->max_size;
     r->max_size = new_size;
 
-    r->routes = (Route *)realloc(r->routes, new_size * sizeof(Route));
+    r->routes = (Func *)realloc(r->routes, new_size * sizeof(Func));
     if (r->routes == NULL) {
         errordebug("Memory re-allocation is failed. - Route::routes");
         exit(1);
@@ -91,10 +107,10 @@ char *get_uri(Router *r, size_t i) {
     return uri;
 }
 
-Route get_route(Router *r, size_t i) {
+Func get_route(Router *r, size_t i) {
     // TODO: iのrange check
 
-    Route route = r->routes[i];
+    Func route = r->routes[i];
 
     if (VERBOSE) {
         printf("at get_route\n");
@@ -102,4 +118,34 @@ Route get_route(Router *r, size_t i) {
     }
 
     return route;
+}
+
+static void fn1(int x) { printf("fn1 - %d\n", x); }
+static void fn2(int x) { printf("fn2 - %d\n", x); }
+static void fn3(int x) { printf("fn3 - %d\n", x); }
+static void fn4(int x) { printf("fn4 - %d\n", x); }
+static void fn5(int x) { printf("fn5 - %d\n", x); }
+
+int main() {
+    Router *r = initialize_router();
+
+    printf("router filled: (%ld / %ld)\n", r->length, r->max_size);
+
+    push_new_route(r, "/api/1", fn1);
+    push_new_route(r, "/api/2", fn2);
+    push_new_route(r, "/api/3", fn3);
+    push_new_route(r, "/api/4", fn4);
+    push_new_route(r, "/api/5", fn5);
+
+    for (int i = 0; i < 3; i++) {
+        printf("%d: %s\n", i, get_uri(r, i));
+        printf("    ");
+        get_route(r, i)((i + 1) * 42);
+    }
+
+    printf("router filled: (%ld / %ld)\n", r->length, r->max_size);
+
+    finalize_router(r);
+
+    return 0;
 }

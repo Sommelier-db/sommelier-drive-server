@@ -16,8 +16,8 @@
 #define refsizeof(__TYPE__) (sizeof(__TYPE__ *))
 #define INITIALIZE(__TYPE__) ((__TYPE__ *)malloc(sizeof(__TYPE__)))
 #define INITIALIZE_SIZE(__TYPE__, __SIZE__) \
-    ((__TYPE__ *)malloc(__SIZE__ * refsizeof(__TYPE__)))
-#define INITIALIZE_STRING(__SIZE__) ((char *)malloc(__SIZE__ * sizeof(char)))
+    ((__TYPE__ *)malloc(__SIZE__ * sizeof(__TYPE__)))
+#define INITIALIZE_STRING(__SIZE__) (INITIALIZE_SIZE(char, __SIZE__))
 
 #define errordebug(__MSG__) fprintf(stderr, "[ERROR] %s\n", __MSG__)
 #define echodebug(__MSG__) fprintf(stdout, "[DEBUG] %s\n", __MSG__)
