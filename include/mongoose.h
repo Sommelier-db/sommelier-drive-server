@@ -172,8 +172,7 @@ struct timeval {
 #endif
 
 // Re-route calloc/free to the FreeRTOS's functions, don't use stdlib
-static inline void *mg_calloc(int cnt, size_t size)
-{
+static inline void *mg_calloc(int cnt, size_t size) {
     void *p = pvPortMalloc(cnt * size);
     if (p != NULL) memset(p, 0, size * cnt);
     return p;
@@ -239,8 +238,7 @@ static inline void *mg_calloc(int cnt, size_t size)
 #define getpeername(a, b, c) 0
 
 // Re-route calloc/free to the FreeRTOS's functions, don't use stdlib
-static inline void *mg_calloc(int cnt, size_t size)
-{
+static inline void *mg_calloc(int cnt, size_t size) {
     void *p = pvPortMalloc(cnt * size);
     if (p != NULL) memset(p, 0, size * cnt);
     return p;
@@ -708,14 +706,10 @@ struct mg_str {
 };
 
 #define MG_NULL_STR \
-    {               \
-        NULL, 0     \
-    }
+    { NULL, 0 }
 
-#define MG_C_STR(a)        \
-    {                      \
-        (a), sizeof(a) - 1 \
-    }
+#define MG_C_STR(a) \
+    { (a), sizeof(a) - 1 }
 
 // Using macro to avoid shadowing C++ struct constructor, see #1298
 #define mg_str(s) mg_str_s(s)
