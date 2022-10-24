@@ -11,6 +11,7 @@
 #define MAX_SIZE_HASH 1024
 #define MAX_SIZE_PKE_CT 1024
 #define MAX_SIZE_PKSE_CT 1024
+#define MAX_SIZE_SKE_CT 1024
 
 typedef struct user_table_row {
     uint64_t id;

@@ -550,15 +550,23 @@ void debug_shared_key(SharedKey *sk) {
 }
 
 void debug_content(Content *c) {
-    fprintf(stdout, "<Content id: %ld, skh: %s, ctc: %s>\n", c->id,
-            c->shared_key_hash, c->content_cipher_text);
-    fflush(stdout);
+    if (c != NULL) {
+        fprintf(stdout, "<Content id: %ld, skh: %s, ctc: %s>\n", c->id,
+                c->shared_key_hash, c->content_cipher_text);
+        fflush(stdout);
+    } else {
+        errordebug("Content is NULL.");
+    }
 }
 
 void debug_write_permission(WritePermission *wp) {
-    fprintf(stdout, "<WritePermission id: %ld, pid: %ld, uid: %ld>\n", wp->id,
-            wp->path_id, wp->user_id);
-    fflush(stdout);
+    if (wp != NULL) {
+        fprintf(stdout, "<WritePermission id: %ld, pid: %ld, uid: %ld>\n",
+                wp->id, wp->path_id, wp->user_id);
+        fflush(stdout);
+    } else {
+        errordebug("WritePermission is NULL.");
+    }
 }
 
 void debug_path_vector(PathVector *);

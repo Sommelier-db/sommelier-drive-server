@@ -159,12 +159,105 @@ SharedKey *ReadSharedKey(sqlite3 *db, uint64_t id) {
     return row;
 }
 
-Content *CreateContent(sqlite3 *db, char *skh, char *ctc);
+Content *CreateContent(sqlite3 *db, char *skh, char *ctc) {
+    char sql[MAX_SIZE_SQL_CREATE_CONTENT] = "";
+    sprintf(sql,
+            "INSERT INTO content_table (SharedKeyHash, ContentCipherText) "
+            "values ('%s', '%s')",
+            skh, ctc);
 
-Content *ReadContent(sqlite3 *db, uint64_t id);
+    if (DEBUG) {
+        printf("    sql - %s\n", sql);
+    }
+
+    uint64_t id = __exec_simple_insert_sql(db, sql);
+    Content *c = initialize_content();
+    set_content(c, id, skh, ctc);
+
+    return c;
+}
+
+static int callback_get_content(void *row, int argc, char **argv,
+                                char **azColName) {
+    if (DEBUG) {
+        printf("    select - id: %s, skh: %s, ctc: %s\n", argv[0], argv[1],
+               argv[2]);
+    }
+
+    set_content((Content *)row, AS_U64(argv[0]), argv[1], argv[2]);
+
+    return 0;
+}
+
+Content *ReadContent(sqlite3 *db, uint64_t id) {
+    char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
+    sprintf(sql,
+            "SELECT ContentID, SharedKeyHash, ContentCipherText FROM "
+            "content_table WHERE ContentID = %ld;",
+            id);
+
+    Content *row = initialize_content();
+    char *zErrMsg = 0;
+    int rc = sqlite3_exec(db, sql, callback_get_content, (void *)row, &zErrMsg);
+
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }
+
+    return row;
+}
 
 ContentVector *FilterBySharedKeyHash(sqlite3 *db, char *skh);
 
-WritePermission *CreateWritePermission(sqlite3 *db, uint64_t pid, uint64_t uid);
+WritePermission *CreateWritePermission(sqlite3 *db, uint64_t pid,
+                                       uint64_t uid) {
+    char sql[MAX_SIZE_SQL_CREATE_WRITE_PERMISSION] = "";
+    sprintf(sql,
+            "INSERT INTO write_permission_table (PathID, UserID) "
+            "values (%ld, %ld)",
+            pid, uid);
 
-WritePermission *ReadWritePermission(sqlite3 *db, uint64_t id);
+    if (DEBUG) {
+        printf("    sql - %s\n", sql);
+    }
+
+    uint64_t id = __exec_simple_insert_sql(db, sql);
+    WritePermission *wp = initialize_write_permission();
+    set_write_permission(wp, id, pid, uid);
+
+    return wp;
+}
+
+static int callback_get_write_permission(void *row, int argc, char **argv,
+                                         char **azColName) {
+    if (DEBUG) {
+        printf("    select - id: %s, pid: %s, uid: %s\n", argv[0], argv[1],
+               argv[2]);
+    }
+
+    set_write_permission((WritePermission *)row, AS_U64(argv[0]),
+                         AS_U64(argv[1]), AS_U64(argv[2]));
+
+    return 0;
+}
+
+WritePermission *ReadWritePermission(sqlite3 *db, uint64_t id) {
+    char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
+    sprintf(sql,
+            "SELECT WritePermissionID, PathID, UserID FROM "
+            "write_permission_table WHERE WritePermissionID = %ld;",
+            id);
+
+    WritePermission *row = initialize_write_permission();
+
+    char *zErrMsg = 0;
+    int rc = sqlite3_exec(db, sql, callback_get_write_permission, (void *)row,
+                          &zErrMsg);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }
+
+    return row;
+}
