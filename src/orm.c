@@ -190,18 +190,6 @@ Content *CreateContent(sqlite3 *db, char *skh, char *ctc) {
     return c;
 }
 
-static int callback_get_content(void *row, int argc, char **argv,
-                                char **azColName) {
-    if (DEBUG) {
-        printf("    select - id: %s, skh: %s, ctc: %s\n", argv[0], argv[1],
-               argv[2]);
-    }
-
-    set_content((Content *)row, AS_U64(argv[0]), argv[1], argv[2]);
-
-    return 0;
-}
-
 Content *ReadContent(sqlite3 *db, uint64_t id) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
@@ -209,16 +197,28 @@ Content *ReadContent(sqlite3 *db, uint64_t id) {
             "content_table WHERE ContentID = %ld;",
             id);
 
-    Content *row = initialize_content();
-    char *zErrMsg = 0;
-    int rc = sqlite3_exec(db, sql, callback_get_content, (void *)row, &zErrMsg);
-
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error: %s\n", zErrMsg);
-        sqlite3_free(zErrMsg);
+    sqlite3_stmt *stmt = NULL;
+    int return_value = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    if (return_value) {
+        printf("sqlite3_prepare_v2 is failed. (err_code=%d)\n", return_value);
+        exit(return_value);
     }
 
-    return row;
+    Content *c = initialize_content();
+
+    return_value = sqlite3_step(stmt);
+    if (return_value == SQLITE_ROW) {
+        uint64_t id = (uint64_t)sqlite3_column_int(stmt, 0);
+        char *skh = (char *)sqlite3_column_text(stmt, 1);
+        char *ctc = (char *)sqlite3_column_text(stmt, 2);
+
+        set_content(c, id, skh, ctc);
+    } else {
+        printf("Some error encountered.\n");
+        exit(1);
+    }
+
+    return c;
 }
 
 static int callback_filter_contents_by_shared_key_hash(void *vec, int argc,
@@ -276,19 +276,6 @@ WritePermission *CreateWritePermission(sqlite3 *db, uint64_t pid,
     return wp;
 }
 
-static int callback_get_write_permission(void *row, int argc, char **argv,
-                                         char **azColName) {
-    if (DEBUG) {
-        printf("    select - id: %s, pid: %s, uid: %s\n", argv[0], argv[1],
-               argv[2]);
-    }
-
-    set_write_permission((WritePermission *)row, AS_U64(argv[0]),
-                         AS_U64(argv[1]), AS_U64(argv[2]));
-
-    return 0;
-}
-
 WritePermission *ReadWritePermission(sqlite3 *db, uint64_t id) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
@@ -296,15 +283,26 @@ WritePermission *ReadWritePermission(sqlite3 *db, uint64_t id) {
             "write_permission_table WHERE WritePermissionID = %ld;",
             id);
 
-    WritePermission *row = initialize_write_permission();
-
-    char *zErrMsg = 0;
-    int rc = sqlite3_exec(db, sql, callback_get_write_permission, (void *)row,
-                          &zErrMsg);
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error: %s\n", zErrMsg);
-        sqlite3_free(zErrMsg);
+    sqlite3_stmt *stmt = NULL;
+    int return_value = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    if (return_value) {
+        printf("sqlite3_prepare_v2 is failed. (err_code=%d)\n", return_value);
+        exit(return_value);
     }
 
-    return row;
+    WritePermission *wp = initialize_write_permission();
+
+    return_value = sqlite3_step(stmt);
+    if (return_value == SQLITE_ROW) {
+        uint64_t id = (uint64_t)sqlite3_column_int(stmt, 0);
+        uint64_t pid = (uint64_t)sqlite3_column_int(stmt, 1);
+        uint64_t uid = (uint64_t)sqlite3_column_int(stmt, 2);
+
+        set_write_permission(wp, id, pid, uid);
+    } else {
+        printf("Some error encountered.\n");
+        exit(1);
+    }
+
+    return wp;
 }
