@@ -34,10 +34,12 @@ int main() {
 
     SharedKey *sk1 = CreateSharedKey(db, pid, "ctsk");
     SharedKey *sk2 = ReadSharedKey(db, sk1->id);
+    SharedKey *sk3 = ReadSharedKey(db, sk1->id);
 
     if (DEBUG) {
         debug_shared_key(sk1);
         debug_shared_key(sk2);
+        debug_shared_key(sk3);
     }
 
     return 0;

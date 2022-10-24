@@ -141,18 +141,6 @@ SharedKey *CreateSharedKey(sqlite3 *db, uint64_t pid, char *ctsk) {
     return sk;
 }
 
-static int callback_get_shared_key(void *row, int argc, char **argv,
-                                   char **azColName) {
-    if (DEBUG) {
-        printf("    select - id: %s, pid: %s, ctsk: %s\n", argv[0], argv[1],
-               argv[2]);
-    }
-
-    set_shared_key((SharedKey *)row, AS_U64(argv[0]), AS_U64(argv[1]), argv[2]);
-
-    return 0;
-}
-
 SharedKey *ReadSharedKey(sqlite3 *db, uint64_t id) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
@@ -160,17 +148,28 @@ SharedKey *ReadSharedKey(sqlite3 *db, uint64_t id) {
             "shared_key_table WHERE SharedKeyID = %ld;",
             id);
 
-    SharedKey *row = initialize_shared_key();
-
-    char *zErrMsg = 0;
-    int rc =
-        sqlite3_exec(db, sql, callback_get_shared_key, (void *)row, &zErrMsg);
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error: %s\n", zErrMsg);
-        sqlite3_free(zErrMsg);
+    sqlite3_stmt *stmt = NULL;
+    int return_value = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    if (return_value) {
+        printf("sqlite3_prepare_v2 is failed. (err_code=%d)\n", return_value);
+        exit(return_value);
     }
 
-    return row;
+    SharedKey *sk = initialize_shared_key();
+
+    return_value = sqlite3_step(stmt);
+    if (return_value == SQLITE_ROW) {
+        uint64_t id = (uint64_t)sqlite3_column_int(stmt, 0);
+        uint64_t pid = (uint64_t)sqlite3_column_int(stmt, 1);
+        char *ctsk = (char *)sqlite3_column_text(stmt, 2);
+
+        set_shared_key(sk, id, pid, ctsk);
+    } else {
+        printf("Some error encountered.\n");
+        exit(1);
+    }
+
+    return sk;
 }
 
 Content *CreateContent(sqlite3 *db, char *skh, char *ctc) {
