@@ -51,7 +51,7 @@ int main(void) {
     push_new_route(router, "/api/user", api_user_view);
     push_new_route(router, "/api/file-path", api_path_view);
     push_new_route(router, "/api/file-path/children", api_path_children_view);
-    push_new_route(router, "/api/file-path/search", api_path_search_view);
+    // push_new_route(router, "/api/file-path/search", api_path_search_view);
     push_new_route(router, "/api/shared-key", api_shared_key_view);
     push_new_route(router, "/api/authorization-seed",
                    api_authorization_seed_view);
