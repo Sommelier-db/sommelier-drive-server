@@ -1,0 +1,3 @@
+[submodule "sommelier-drive-cryptos"]
+	path = sommelier-drive-cryptos
+	url = git@github.com:Sommelier-db/sommelier-drive-cryptos.git
