@@ -55,7 +55,7 @@ int main(void) {
     push_new_route(router, "/api/shared-key", api_shared_key_view);
     push_new_route(router, "/api/authorization-seed",
                    api_authorization_seed_view);
-    push_new_route(router, "/api/content", api_content_view);
+    push_new_route(router, "/api/contents", api_content_view);
     push_new_route(router, "/api/write-permission", api_write_permission_view);
 
     // Set log level
