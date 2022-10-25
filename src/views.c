@@ -3,77 +3,100 @@
 #define __ERROR_REPLY(c) \
     (mg_http_reply(c, 500, "", "{\"msg\": \"internal error\"}\n"))
 
-char *_mg_method(struct mg_str s) {
+char *_mg_method(struct mg_str s)
+{
     char *method = INITIALIZE_STRING(s.len + 1);
     strncpy(method, s.ptr, s.len);
     method[s.len] = '\0';
     return method;
 }
 
-json_t *_mg_json_body(struct mg_str s, int *status) {
+json_t *_mg_json_body(struct mg_str s, int *status)
+{
     json_error_t err;
     json_t *j = json_loads(s.ptr, 0, &err);
 
-    if (j == NULL) {
+    if (j == NULL)
+    {
         *status = 1;
         return NULL;
-    } else {
+    }
+    else
+    {
         *status = 0;
         return j;
     }
 }
 
 void main_view(struct mg_connection *c, struct mg_http_message *hm,
-               sqlite3 *_db) {
+               sqlite3 *_db)
+{
     int status = 0;
     json_t *body = _mg_json_body(hm->body, &status);
-    if (status == 0) {
+    if (status == 0)
+    {
         char *dumped = json_dumps(body, 0);
         mg_http_reply(c, 200, "", "%s\n", dumped);
         free(dumped);
-    } else {
+    }
+    else
+    {
         __ERROR_REPLY(c);
     }
 }
 
 void api_users_view(struct mg_connection *c, struct mg_http_message *hm,
-                    sqlite3 *db) {
+                    sqlite3 *db)
+{
     char *method = _mg_method(hm->method);
     int status = 0;
 
-    if (strcmp(method, "GET") == 0) {
+    if (strcmp(method, "GET") == 0)
+    {
         json_t *body = _mg_json_body(hm->body, &status);
 
-        if (status == 0) {
+        if (status == 0)
+        {
             json_t *uid = json_object_get(body, "userId");
 
-            if (uid != NULL) {
+            if (uid != NULL)
+            {
                 uint64_t user_id = (uint64_t)json_integer_value(uid);
                 User *u = ReadUser(db, user_id);
 
-                if (u != NULL) {
+                if (u != NULL)
+                {
                     json_t *ju = decode_json_user(u);
                     char *dumped = json_dumps(ju, 0);
-                    mg_http_reply(c, 200, "", "%s\n", dumped);
+                    mg_http_reply(c, 200, "", "%s", dumped);
 
                     free(dumped);
                     free(ju);
                     finalize_user(u);
-                } else {
+                }
+                else
+                {
                     __ERROR_REPLY(c);
                 }
 
                 free(uid);
-            } else {
+            }
+            else
+            {
                 __ERROR_REPLY(c);
             }
-        } else {
+        }
+        else
+        {
             __ERROR_REPLY(c);
         }
-    } else if (strcmp(method, "POST") == 0) {
+    }
+    else if (strcmp(method, "POST") == 0)
+    {
         json_t *body = _mg_json_body(hm->body, &status);
 
-        if (status == 0) {
+        if (status == 0)
+        {
             char *dpk =
                 (char *)json_string_value(json_object_get(body, "dataPK"));
             char *kpk =
@@ -81,16 +104,20 @@ void api_users_view(struct mg_connection *c, struct mg_http_message *hm,
 
             User *u = CreateUser(db, dpk, kpk);
 
-            mg_http_reply(c, 200, "", "%d\n", u->id);
+            mg_http_reply(c, 200, "", "%d", u->id);
 
             free(dpk);
             free(kpk);
 
             finalize_user(u);
-        } else {
+        }
+        else
+        {
             __ERROR_REPLY(c);
         }
-    } else {
+    }
+    else
+    {
         __ERROR_REPLY(c);
         exit(1);
     }
