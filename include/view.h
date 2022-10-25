@@ -7,6 +7,7 @@
 #include "mongoose.h"
 #include "orm.h"
 #include "router.h"
+#include "sommelier_drive_cryptos.h"
 #include "util.h"
 #include "views/authorization_seed.h"
 #include "views/content.h"

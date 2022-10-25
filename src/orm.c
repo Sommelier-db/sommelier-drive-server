@@ -151,7 +151,7 @@ Path *CreatePath(sqlite3 *db, uint64_t uid, char *ph, char *ctd, char *ctk) {
     char sql[MAX_SIZE_SQL_CREATE_PATH] = "";
     sprintf(sql,
             "INSERT INTO path_table (UserID, PermissionHash, DataCipherText, "
-            "KeywordCipherText) values (%ld, '%s', '%s', '%s')",
+            "KeywordCipherText) values (%ld, '%s', '%s', '%s');",
             uid, ph, ctd, ctk);
 
     if (DEBUG) {
@@ -555,7 +555,7 @@ WritePermission *CreateWritePermission(sqlite3 *db, uint64_t pid,
     char sql[MAX_SIZE_SQL_CREATE_WRITE_PERMISSION] = "";
     sprintf(sql,
             "INSERT INTO write_permission_table (PathID, UserID) "
-            "values (%ld, %ld)",
+            "values (%ld, %ld);",
             pid, uid);
 
     if (DEBUG) {

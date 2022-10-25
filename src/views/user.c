@@ -21,7 +21,7 @@ json_t *post_api_user_request(struct mg_str s) {
     // dataCT: string, keywordCT: string
     int c = json_has_key(j, "dataPK", JSON_STRING) &&
             json_has_key(j, "keywordPK", JSON_STRING) &&
-            json_has_key(j, "permissionHash", JSON_STRING) &&
+            // json_has_key(j, "permissionHash", JSON_STRING) &&
             json_has_key(j, "dataCT", JSON_STRING) &&
             json_has_key(j, "keywordCT", JSON_STRING);
 
@@ -68,8 +68,6 @@ void api_user_view(struct mg_connection *c, struct mg_http_message *hm,
                 (char *)json_string_value(json_object_get(body, "dataPK"));
             char *kpk =
                 (char *)json_string_value(json_object_get(body, "keywordPK"));
-            char *ph = (char *)json_string_value(
-                json_object_get(body, "permissionHash"));
             char *dct =
                 (char *)json_string_value(json_object_get(body, "dataCT"));
             char *kct =
@@ -77,17 +75,22 @@ void api_user_view(struct mg_connection *c, struct mg_http_message *hm,
 
             // TODO: NULL check?
             User *u = CreateUser(db, dpk, kpk);
+
+            char *ph = computePermissionHash(u->id, "/");
+
             Path *p = CreatePath(db, u->id, ph, dct, kct);
-            CreateWritePermission(db, p->id, u->id);
+
+            echodebug("before createwritepermission");
+
+            WritePermission *wp = CreateWritePermission(db, p->id, u->id);
+
+            echodebug("after createwritepermission");
 
             mg_http_reply(c, 200, "", "%d", u->id);
 
-            free(dpk);
-            free(kpk);
-            free(ph);
-            free(dct);
-            free(kct);
             finalize_user(u);
+            finalize_path(p);
+            finalize_write_permission(wp);
         } else {
             __ERROR_REPLY(c);
         }
