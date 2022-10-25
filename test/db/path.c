@@ -37,6 +37,8 @@ int main() {
 
     PathVector *vec = FilterByPermissionHash(db, "ph");
 
+    PathVector *vec2 = SearchEncryptedPath(db, u->id, "trapdoor");
+
     printf("vector size: %ld\n", vec->length);
     for (int i = 0; i < vec->length; i++) {
         debug_path(vec->buf[i]);

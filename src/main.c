@@ -27,6 +27,9 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
 
         for (size_t i = 0; i < router->length; i++) {
             if (mg_http_match_uri(hm, get_uri(router, i))) {
+                echodebug("match:");
+                echodebug(get_uri(router, i));
+
                 get_route(router, i)(c, hm, db);
             }
         }
@@ -49,9 +52,9 @@ int main(void) {
     router = initialize_router();
 
     push_new_route(router, "/api/user", api_user_view);
-    push_new_route(router, "/api/file-path", api_path_view);
     push_new_route(router, "/api/file-path/children", api_path_children_view);
-    // push_new_route(router, "/api/file-path/search", api_path_search_view);
+    push_new_route(router, "/api/file-path/search", api_path_search_view);
+    push_new_route(router, "/api/file-path", api_path_view);
     push_new_route(router, "/api/shared-key", api_shared_key_view);
     push_new_route(router, "/api/authorization-seed",
                    api_authorization_seed_view);

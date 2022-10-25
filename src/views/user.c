@@ -80,8 +80,6 @@ void api_user_view(struct mg_connection *c, struct mg_http_message *hm,
 
             Path *p = CreatePath(db, u->id, ph, dct, kct);
 
-            echodebug("before createwritepermission");
-
             WritePermission *wp = CreateWritePermission(db, p->id, u->id);
 
             if (wp != NULL) {
