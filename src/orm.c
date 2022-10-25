@@ -211,6 +211,43 @@ Path *ReadPath(sqlite3 *db, uint64_t id) {
     return NULL;
 }
 
+static int callback_search_encrypted_path(void *vec, int argc, char **argv,
+                                          char **azColName) {
+    if (DEBUG) {
+        printf("    select - id: %s, uid: %s, ph: %s, ctd: %s, ctk: %s\n",
+               argv[0], argv[1], argv[2], argv[3], argv[4]);
+    }
+
+    return 0;
+}
+
+// depends on Sommelier-DB
+PathVector *SearchEncryptedPath(sqlite3 *db, uint64_t uid, char *trapdoor) {
+    char sql[MAX_SIZE_SQL_FILTER_BY_PREMISSION_HASH] = "";
+    sprintf(sql,
+            "SELECT PathID, UserID, PermissionHash, DataCipherText, "
+            "KeywordCipherText FROM path_table WHERE "
+            "test_cipher(KeywordCipherText, '%s') = 1;",
+            trapdoor);
+
+    if (DEBUG) {
+        printf("    sql - %s\n", sql);
+    }
+
+    PathVector *vec = initialize_path_vector();
+
+    char *zErrMsg = 0;
+    int rc = sqlite3_exec(db, sql, callback_search_encrypted_path, (void *)vec,
+                          &zErrMsg);
+
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }
+
+    return vec;
+}
+
 static int callback_filter_path_by_permission_hash(void *vec, int argc,
                                                    char **argv,
                                                    char **azColName) {

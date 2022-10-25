@@ -80,26 +80,10 @@ size_t resize_router(Router *r) {
 
 char *get_uri(Router *r, size_t i) {
     // TODO: iのrange check
-
-    char *uri = r->uris[i];
-
-    if (VERBOSE) {
-        printf("at get_uri\n");
-        echodebug(uri);
-    }
-
-    return uri;
+    return r->uris[i];
 }
 
 Route get_route(Router *r, size_t i) {
     // TODO: iのrange check
-
-    Route route = r->routes[i];
-
-    if (VERBOSE) {
-        printf("at get_route\n");
-        echodebug(get_uri(r, i));
-    }
-
-    return route;
+    return r->routes[i];
 }

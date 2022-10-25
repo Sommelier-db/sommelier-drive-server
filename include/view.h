@@ -1,12 +1,12 @@
 #pragma once
 
 #include <jansson.h>
-#include <sqlite3.h>
 
 #include "entity.h"
 #include "mongoose.h"
 #include "orm.h"
 #include "router.h"
+#include "sommelier-db.h"
 #include "sommelier_drive_cryptos.h"
 #include "util.h"
 #include "views/authorization_seed.h"

@@ -1,7 +1,7 @@
-#include <sqlite3.h>
 #include <stdlib.h>
 
 #include "orm.h"
+#include "sommelier-db.h"
 #include "util.h"
 
 #define DBFILE "data/_test_db_path.db"
@@ -36,6 +36,8 @@ int main() {
     }
 
     PathVector *vec = FilterByPermissionHash(db, "ph");
+
+    PathVector *vec2 = SearchEncryptedPath(db, u->id, "trapdoor");
 
     printf("vector size: %ld\n", vec->length);
     for (int i = 0; i < vec->length; i++) {

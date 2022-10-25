@@ -210,9 +210,7 @@ void finalize_path_vector(PathVector *vec) {
 size_t push_path_vector(PathVector *vec, Path *path) {
     if (vec->length == vec->max_size) {
         if (DEBUG) {
-            printf(
-                "[DEBUG] resize_path_vector() called. - "
-                "push_path_vector()\n");
+            echodebug("resize_path_vector() called. - push_path_vector()");
         }
 
         resize_path_vector(vec);

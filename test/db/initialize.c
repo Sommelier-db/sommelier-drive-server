@@ -1,7 +1,7 @@
-#include <sqlite3.h>
 #include <stdlib.h>
 
 #include "orm.h"
+#include "sommelier-db.h"
 #include "util.h"
 
 #define DBFILE "data/_test_db_initialize.db"
