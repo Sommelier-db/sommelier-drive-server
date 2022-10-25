@@ -57,18 +57,18 @@ uint64_t increment_user_nonce(User *user) { return ++(user->nonce); }
 json_t *decode_json_user(User *user) {
     json_t *json = json_object();
 
-    if (json_object_set(json, "id", json_integer(user->id)) < 0) {
+    if (json_object_set(json, "userId", json_integer(user->id)) < 0) {
         errordebug("Setting JSON is failed. - User::id");
         exit(1);
     }
 
-    if (json_object_set(json, "data_public_key",
-                        json_string(user->data_public_key)) < 0) {
+    if (json_object_set(json, "dataPK", json_string(user->data_public_key)) <
+        0) {
         errordebug("Setting JSON is failed. - User::data_public_key");
         exit(1);
     }
 
-    if (json_object_set(json, "keyword_public_key",
+    if (json_object_set(json, "keywordPK",
                         json_string(user->keyword_public_key)) < 0) {
         errordebug("Setting JSON is failed. - User::keyword_public_key");
         exit(1);
@@ -149,29 +149,29 @@ void set_path_keyword_cipher_text(Path *p, const char *ctk) {
 json_t *decode_json_path(Path *path) {
     json_t *json = json_object();
 
-    if (json_object_set(json, "id", json_integer(path->id)) < 0) {
+    if (json_object_set(json, "pathId", json_integer(path->id)) < 0) {
         errordebug("Setting JSON is failed. - Path::id");
         exit(1);
     }
 
-    if (json_object_set(json, "user_id", json_integer(path->user_id)) < 0) {
+    if (json_object_set(json, "userId", json_integer(path->user_id)) < 0) {
         errordebug("Setting JSON is failed. - Path::user_id");
         exit(1);
     }
 
-    if (json_object_set(json, "permission_hash",
+    if (json_object_set(json, "permissionHash",
                         json_string(path->permission_hash)) < 0) {
         errordebug("Setting JSON is failed. - Path::permission_hash");
         exit(1);
     }
 
-    if (json_object_set(json, "data_cipher_text",
-                        json_string(path->data_cipher_text)) < 0) {
+    if (json_object_set(json, "dataCT", json_string(path->data_cipher_text)) <
+        0) {
         errordebug("Setting JSON is failed. - Path::data_cipher_text");
         exit(1);
     }
 
-    if (json_object_set(json, "keyword_cipher_text",
+    if (json_object_set(json, "keywordCT",
                         json_string(path->keyword_cipher_text)) < 0) {
         errordebug("Setting JSON is failed. - Path::keyword_cipher_text");
         exit(1);
@@ -298,18 +298,18 @@ void set_shared_key_share_key_cipher_text(SharedKey *sk, const char *ctsk) {
 json_t *decode_json_shared_key(SharedKey *sk) {
     json_t *json = json_object();
 
-    if (json_object_set(json, "id", json_integer(sk->id)) < 0) {
+    if (json_object_set(json, "sharedKeyId", json_integer(sk->id)) < 0) {
         errordebug("Setting JSON is failed. - SharedKey::id");
         exit(1);
     }
 
-    if (json_object_set(json, "path_id", json_integer(sk->path_id)) < 0) {
+    if (json_object_set(json, "pathId", json_integer(sk->path_id)) < 0) {
         errordebug("Setting JSON is failed. - SharedKey::path_id");
         exit(1);
     }
 
-    if (json_object_set(json, "shared_key_cipher_text",
-                        json_string(sk->shared_key_cipher_text)) < 0) {
+    if (json_object_set(json, "ct", json_string(sk->shared_key_cipher_text)) <
+        0) {
         errordebug(
             "Setting JSON is failed. - SharedKey::shared_key_cipher_text");
         exit(1);
@@ -369,17 +369,17 @@ void set_authorization_seed_authorization_seed_cipher_text(
 json_t *decode_json_authorization_seed(AuthorizationSeed *as) {
     json_t *json = json_object();
 
-    if (json_object_set(json, "id", json_integer(as->id)) < 0) {
+    if (json_object_set(json, "authorizationId", json_integer(as->id)) < 0) {
         errordebug("Setting JSON is failed. - AuthorizationSeed::id");
         exit(1);
     }
 
-    if (json_object_set(json, "path_id", json_integer(as->path_id)) < 0) {
+    if (json_object_set(json, "pathId", json_integer(as->path_id)) < 0) {
         errordebug("Setting JSON is failed. - AuthorizationSeed::path_id");
         exit(1);
     }
 
-    if (json_object_set(json, "authorization_seed_cipher_text",
+    if (json_object_set(json, "ct",
                         json_string(as->authorization_seed_cipher_text)) < 0) {
         errordebug(
             "Setting JSON is failed. - "
@@ -460,19 +460,30 @@ uint64_t increment_content_nonce(Content *c) { return ++(c->nonce); }
 json_t *decode_json_content(Content *c) {
     json_t *json = json_object();
 
-    if (json_object_set(json, "id", json_integer(c->id)) < 0) {
+    if (json_object_set(json, "contentsId", json_integer(c->id)) < 0) {
         errordebug("Setting JSON is failed. - Content::id");
         exit(1);
     }
 
-    if (json_object_set(json, "shared_key_hash",
+    if (json_object_set(json, "sharedKeyHash",
                         json_string(c->shared_key_hash)) < 0) {
         errordebug("Setting JSON is failed. - Content::shared_key_hash");
         exit(1);
     }
 
-    if (json_object_set(json, "content_cipher_text",
-                        json_string(c->content_cipher_text)) < 0) {
+    if (json_object_set(json, "authorizationPK",
+                        json_string(c->authorization_public_key)) < 0) {
+        errordebug(
+            "Setting JSON is failed. - Content::authorization_public_key");
+        exit(1);
+    }
+
+    if (json_object_set(json, "nonce", json_integer(c->nonce)) < 0) {
+        errordebug("Setting JSON is failed. - Content::nonce");
+        exit(1);
+    }
+
+    if (json_object_set(json, "ct", json_string(c->content_cipher_text)) < 0) {
         errordebug("Setting JSON is failed. - Content::content_cipher_text");
         exit(1);
     }
@@ -587,17 +598,17 @@ void set_write_permission_user_id(WritePermission *wp, uint64_t user_id) {
 json_t *decode_json_write_permission(WritePermission *wp) {
     json_t *json = json_object();
 
-    if (json_object_set(json, "id", json_integer(wp->id)) < 0) {
+    if (json_object_set(json, "wPermissionId", json_integer(wp->id)) < 0) {
         errordebug("Setting JSON is failed. - WritePermission::id");
         exit(1);
     }
 
-    if (json_object_set(json, "path_id", json_integer(wp->path_id)) < 0) {
+    if (json_object_set(json, "pathId", json_integer(wp->path_id)) < 0) {
         errordebug("Setting JSON is failed. - WritePermission::path_id");
         exit(1);
     }
 
-    if (json_object_set(json, "user_id", json_integer(wp->user_id)) < 0) {
+    if (json_object_set(json, "userId", json_integer(wp->user_id)) < 0) {
         errordebug("Setting JSON is failed. - WritePermission::user_id");
         exit(1);
     }
