@@ -54,6 +54,8 @@ Content *CreateContent(sqlite3 *, char *, char *, char *);
 
 Content *ReadContent(sqlite3 *, uint64_t);
 
+Content *ReadContentBySharedKeyHash(sqlite3 *, char *);
+
 void IncrementContentNonce(sqlite3 *, Content *);
 
 ContentVector *FilterBySharedKeyHash(sqlite3 *, char *);
