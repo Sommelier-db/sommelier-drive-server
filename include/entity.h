@@ -5,17 +5,18 @@
 
 #include "util.h"
 
-#define MAX_SIZE_PKE_KEY 720
-#define MAX_SIZE_PKSE_KEY 47112
-#define MAX_SIZE_HASH 64
-#define MAX_SIZE_PKE_CT 512
+#define MAX_SIZE_PKE_KEY 721
+#define MAX_SIZE_PKSE_KEY 47113
+#define MAX_SIZE_HASH 65
+#define MAX_SIZE_PKE_CT 1000
 #define MAX_SIZE_PKSE_KEYWORD_CT 2900000
-#define MAX_SIZE_PKSE_CONTENT_CT 4194360
+#define MAX_SIZE_PKSE_CONTENT_CT 4194361
 
 #define VECTOR_MAX_SIZE_DEFAULT 16
 #define VECTOR_EXTEND_RATE 2
 
-typedef struct user_table_row {
+typedef struct user_table_row
+{
     uint64_t id;
     char *data_public_key;
     char *keyword_public_key;
@@ -32,7 +33,8 @@ void set_user_nonce(User *, uint64_t);
 uint64_t increment_user_nonce(User *);
 json_t *decode_json_user(User *);
 
-typedef struct path_table_row {
+typedef struct path_table_row
+{
     uint64_t id;
     uint64_t user_id;
     char *permission_hash;
@@ -51,7 +53,8 @@ void set_path_data_cipher_text(Path *, const char *);
 void set_path_keyword_cipher_text(Path *, const char *);
 json_t *decode_json_path(Path *);
 
-typedef struct shared_key_table_row {
+typedef struct shared_key_table_row
+{
     uint64_t id;
     uint64_t path_id;
     char *shared_key_cipher_text;
@@ -65,7 +68,8 @@ void set_shared_key_path_id(SharedKey *, uint64_t);
 void set_shared_key_share_key_cipher_text(SharedKey *, const char *);
 json_t *decode_json_shared_key(SharedKey *);
 
-typedef struct authorization_seed_table_row {
+typedef struct authorization_seed_table_row
+{
     uint64_t id;
     uint64_t path_id;
     char *authorization_seed_cipher_text;
@@ -81,7 +85,8 @@ void set_authorization_seed_authorization_seed_cipher_text(AuthorizationSeed *,
                                                            const char *);
 json_t *decode_json_authorization_seed(AuthorizationSeed *);
 
-typedef struct content_table_row {
+typedef struct content_table_row
+{
     uint64_t id;
     char *shared_key_hash;
     char *authorization_public_key;
@@ -101,7 +106,8 @@ void set_content_content_cipher_text(Content *, const char *);
 uint64_t increment_content_nonce(Content *);
 json_t *decode_json_content(Content *);
 
-typedef struct write_permission_table_row {
+typedef struct write_permission_table_row
+{
     uint64_t id;
     uint64_t path_id;
     uint64_t user_id;
@@ -115,7 +121,8 @@ void set_write_permission_path_id(WritePermission *, uint64_t);
 void set_write_permission_user_id(WritePermission *, uint64_t);
 json_t *decode_json_write_permission(WritePermission *);
 
-typedef struct path_table_vector {
+typedef struct path_table_vector
+{
     size_t max_size;
     size_t length;
     Path **buf;
@@ -127,7 +134,8 @@ size_t push_path_vector(PathVector *, Path *);
 size_t resize_path_vector(PathVector *);
 json_t *decode_json_path_vector(PathVector *);
 
-typedef struct content_table_vector {
+typedef struct content_table_vector
+{
     size_t max_size;
     size_t length;
     Content **buf;
