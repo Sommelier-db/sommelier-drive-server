@@ -17,9 +17,13 @@ json_t *post_api_user_request(struct mg_str s) {
     json_error_t err;
     json_t *j = json_loads(s.ptr, 0, &err);
 
-    // dataPK: string, keywordPK: string
+    // dataPK: string, keywordPK: string, permissionHash: string,
+    // dataCT: string, keywordCT: string
     int c = json_has_key(j, "dataPK", JSON_STRING) &&
-            json_has_key(j, "keywordPK", JSON_STRING);
+            json_has_key(j, "keywordPK", JSON_STRING) &&
+            json_has_key(j, "permissionHash", JSON_STRING) &&
+            json_has_key(j, "dataCT", JSON_STRING) &&
+            json_has_key(j, "keywordCT", JSON_STRING);
 
     if (c) {
         return j;
@@ -45,7 +49,7 @@ void api_user_view(struct mg_connection *c, struct mg_http_message *hm,
             if (u != NULL) {
                 json_t *ju = decode_json_user(u);
                 char *dumped = json_dumps(ju, 0);
-                mg_http_reply(c, 200, "", "%s\n", dumped);
+                mg_http_reply(c, 200, "", "%s", dumped);
 
                 free(dumped);
                 free(ju);
@@ -64,13 +68,25 @@ void api_user_view(struct mg_connection *c, struct mg_http_message *hm,
                 (char *)json_string_value(json_object_get(body, "dataPK"));
             char *kpk =
                 (char *)json_string_value(json_object_get(body, "keywordPK"));
+            char *ph = (char *)json_string_value(
+                json_object_get(body, "permissionHash"));
+            char *dct =
+                (char *)json_string_value(json_object_get(body, "dataCT"));
+            char *kct =
+                (char *)json_string_value(json_object_get(body, "keywordCT"));
 
+            // TODO: NULL check?
             User *u = CreateUser(db, dpk, kpk);
+            Path *p = CreatePath(db, u->id, ph, dct, kct);
+            CreateWritePermission(db, p->id, u->id);
 
-            mg_http_reply(c, 200, "", "%d\n", u->id);
+            mg_http_reply(c, 200, "", "%d", u->id);
 
             free(dpk);
             free(kpk);
+            free(ph);
+            free(dct);
+            free(kct);
             finalize_user(u);
         } else {
             __ERROR_REPLY(c);
