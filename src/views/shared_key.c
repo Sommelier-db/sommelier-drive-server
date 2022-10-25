@@ -33,5 +33,59 @@ json_t *post_api_shared_key_request(struct mg_str s) {
     }
 }
 
-void api_shared_key_view(struct mg_connection *, struct mg_http_message *,
-                         sqlite3 *);
+void api_shared_key_view(struct mg_connection *c, struct mg_http_message *hm,
+                         sqlite3 *db) {
+    char *method = request_method(hm->method);
+
+    if (strcmp(method, "GET") == 0) {
+        json_t *body = get_api_shared_key_request(hm->body);
+
+        if (body != NULL) {
+            uint64_t pathId =
+                (uint64_t)json_integer_value(json_object_get(body, "pathId"));
+
+            SharedKey *sk = ReadSharedKey(db, pathId);
+
+            if (sk != NULL) {
+                json_t *jsk = decode_json_shared_key(sk);
+                char *dumped = json_dumps(jsk, 0);
+
+                mg_http_reply(c, 200, "", "%s", dumped);
+
+                free(dumped);
+                free(jsk);
+                finalize_shared_key(sk);
+            } else {
+                __ERROR_REPLY(c);
+            }
+        } else {
+            __ERROR_REPLY(c);
+        }
+    } else if (strcmp(method, "POST") == 0) {
+        json_t *body = post_api_shared_key_request(hm->body);
+
+        if (body != NULL) {
+            uint64_t writeUserId = (uint64_t)json_integer_value(
+                json_object_get(body, "writeUserId"));
+            uint64_t pathId =
+                (uint64_t)json_integer_value(json_object_get(body, "pathId"));
+            char *ct = (char *)json_string_value(json_object_get(body, "ct"));
+
+            // TODO: verify digital signature.
+            User *writeUser = ReadUser(db, writeUserId);
+            IncrementUserNonce(db, writeUser);
+
+            SharedKey *sk = CreateSharedKey(db, pathId, ct);
+
+            mg_http_reply(c, 200, "", "%d", sk->id);
+
+            finalize_shared_key(sk);
+        } else {
+            __ERROR_REPLY(c);
+        }
+    } else {
+        __ERROR_REPLY(c);
+    }
+
+    free(method);
+}

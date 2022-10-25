@@ -54,6 +54,22 @@ void api_content_view(struct mg_connection *c, struct mg_http_message *hm,
         json_t *body = get_api_content_request(hm->body);
 
         if (body != NULL) {
+            char *skh = (char *)json_string_value(
+                json_object_get(body, "sharedKeyhash"));
+            Content *con = ReadContentBySharedKeyHash(db, skh);
+
+            if (con != NULL) {
+                json_t *jcon = decode_json_content(con);
+                char *dumped = json_dumps(jcon, 0);
+                mg_http_reply(c, 200, "", "%s", dumped);
+
+                free(dumped);
+                free(jcon);
+                finalize_content(con);
+            } else {
+                __ERROR_REPLY(c);
+            }
+
         } else {
             __ERROR_REPLY(c);
         }
@@ -61,6 +77,17 @@ void api_content_view(struct mg_connection *c, struct mg_http_message *hm,
         json_t *body = post_api_content_request(hm->body);
 
         if (body != NULL) {
+            char *skh = (char *)json_string_value(
+                json_object_get(body, "sharedKeyHash"));
+            char *apk = (char *)json_string_value(
+                json_object_get(body, "authorizationPK"));
+            char *ct = (char *)json_string_value(json_object_get(body, "ct"));
+
+            Content *con = CreateContent(db, skh, apk, ct);
+
+            mg_http_reply(c, 200, "", "%d", con->id);
+
+            finalize_content(con);
         } else {
             __ERROR_REPLY(c);
         }
@@ -68,6 +95,18 @@ void api_content_view(struct mg_connection *c, struct mg_http_message *hm,
         json_t *body = put_api_content_request(hm->body);
 
         if (body != NULL) {
+            char *skh = (char *)json_string_value(
+                json_object_get(body, "sharedKeyHash"));
+            char *ct = (char *)json_string_value(json_object_get(body, "ct"));
+
+            Content *con = ReadContentBySharedKeyHash(db, skh);
+            set_content_content_cipher_text(con, ct);
+            increment_content_nonce(con);
+            UpdateContent(db, con);
+
+            mg_http_reply(c, 200, "", "%d", con->id);
+
+            finalize_content(con);
         } else {
             __ERROR_REPLY(c);
         }

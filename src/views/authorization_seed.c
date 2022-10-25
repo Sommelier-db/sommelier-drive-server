@@ -38,6 +38,21 @@ void api_authorization_seed_view(struct mg_connection *c,
         json_t *body = get_api_authorization_seed_request(hm->body);
 
         if (body != NULL) {
+            uint64_t pathId =
+                (uint64_t)json_integer_value(json_object_get(body, "pathId"));
+            AuthorizationSeed *as = ReadAuthorizationSeed(db, pathId);
+
+            if (as != NULL) {
+                json_t *jas = decode_json_authorization_seed(as);
+                char *dumped = json_dumps(jas, 0);
+                mg_http_reply(c, 200, "", "%s", dumped);
+
+                free(dumped);
+                free(jas);
+                finalize_authorization_seed(as);
+            } else {
+                __ERROR_REPLY(c);
+            }
         } else {
             __ERROR_REPLY(c);
         }
@@ -45,6 +60,21 @@ void api_authorization_seed_view(struct mg_connection *c,
         json_t *body = post_api_authorization_seed_request(hm->body);
 
         if (body != NULL) {
+            uint64_t writeUserId = (uint64_t)json_integer_value(
+                json_object_get(body, "writeUserId"));
+            uint64_t pathId =
+                (uint64_t)json_integer_value(json_object_get(body, "pathId"));
+            char *ct = (char *)json_string_value(json_object_get(body, "ct"));
+
+            // TODO: verify digital signature.
+            User *writeUser = ReadUser(db, writeUserId);
+            IncrementUserNonce(db, writeUser);
+
+            AuthorizationSeed *as = CreateAuthorizationSeed(db, pathId, ct);
+
+            mg_http_reply(c, 200, "", "%d", as->id);
+
+            finalize_authorization_seed(as);
         } else {
             __ERROR_REPLY(c);
         }

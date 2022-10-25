@@ -41,7 +41,7 @@ void api_path_view(struct mg_connection *c, struct mg_http_message *hm,
     char *method = request_method(hm->method);
 
     if (strcmp(method, "GET") == 0) {
-        json_t *body = get_api_user_request(hm->body);
+        json_t *body = get_api_path_request(hm->body);
 
         if (body != NULL) {
             uint64_t pathId =
@@ -63,11 +63,11 @@ void api_path_view(struct mg_connection *c, struct mg_http_message *hm,
             __ERROR_REPLY(c);
         }
     } else if (strcmp(method, "POST") == 0) {
-        json_t *body = post_api_user_request(hm->body);
+        json_t *body = post_api_path_request(hm->body);
 
         if (body != NULL) {
-            // uint64_t writeUserId = (uint64_t)json_integer_value(
-            //     json_object_get(body, "writeUserId"));
+            uint64_t writeUserId = (uint64_t)json_integer_value(
+                json_object_get(body, "writeUserId"));
             uint64_t readUserId = (uint64_t)json_integer_value(
                 json_object_get(body, "readUserId"));
             char *permissionHash = (char *)json_string_value(
@@ -77,14 +77,15 @@ void api_path_view(struct mg_connection *c, struct mg_http_message *hm,
             char *keywordCT =
                 (char *)json_string_value(json_object_get(body, "keywordCT"));
 
+            // TODO: verify digital signature.
+            User *writeUser = ReadUser(db, writeUserId);
+            IncrementUserNonce(db, writeUser);
+
             Path *p =
                 CreatePath(db, readUserId, permissionHash, dataCT, keywordCT);
 
             mg_http_reply(c, 200, "", "%d", p->id);
 
-            free(permissionHash);
-            free(dataCT);
-            free(keywordCT);
             finalize_path(p);
         } else {
             __ERROR_REPLY(c);

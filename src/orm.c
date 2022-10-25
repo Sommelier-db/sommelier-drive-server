@@ -487,12 +487,11 @@ Content *ReadContentBySharedKeyHash(sqlite3 *db, char *skh) {
 }
 
 void UpdateContent(sqlite3 *db, Content *c) {
-    uint64_t n = increment_content_nonce(c);
     char sql[MAX_SIZE_SQL_PLANE_TEXT] = "";
     sprintf(sql,
             "UPDATE content_table SET Nonce=%ld, ContentCipherText='%s' WHERE "
             "ContentID=%ld;",
-            n, c->content_cipher_text, c->id);
+            c->nonce, c->content_cipher_text, c->id);
 
     if (DEBUG) {
         printf("    sql - %s\n", sql);
