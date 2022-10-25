@@ -3,12 +3,12 @@
 // TODO: execのerror-handling.
 
 void __exec_simple_sql(sqlite3 *db, const char *sql) {
-    char *zErrMsg = 0;
+    char *zErrMsg = NULL;
     int rc = sqlite3_exec(db, sql, 0, 0, &zErrMsg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "SQL error (%d): %s\n", rc, zErrMsg);
+        sqlite3_free(zErrMsg);
     }
-    sqlite3_free(zErrMsg);
 }
 
 uint64_t __exec_simple_insert_sql(sqlite3 *db, const char *sql) {

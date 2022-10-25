@@ -84,13 +84,15 @@ void api_user_view(struct mg_connection *c, struct mg_http_message *hm,
 
             WritePermission *wp = CreateWritePermission(db, p->id, u->id);
 
-            echodebug("after createwritepermission");
+            if (wp != NULL) {
+                mg_http_reply(c, 200, "", "%d", u->id);
 
-            mg_http_reply(c, 200, "", "%d", u->id);
-
-            finalize_user(u);
-            finalize_path(p);
-            finalize_write_permission(wp);
+                finalize_user(u);
+                finalize_path(p);
+                finalize_write_permission(wp);
+            } else {
+                __ERROR_REPLY(c);
+            }
         } else {
             __ERROR_REPLY(c);
         }

@@ -19,20 +19,10 @@ int main() {
 
     InitalizeDatabase(db);
 
-    sqlite3_exec(db,
-                 "INSERT INTO user_table (DataPublicKey, KeywordPublicKey, "
-                 "Nonce) values ('dpk1', 'kpk1', 1)",
-                 0, 0, 0);
-    char sql[MAX_SIZE_SQL_CREATE_USER] = "";
-    int uid = (int)sqlite3_last_insert_rowid(db);
-    sprintf(sql,
-            "INSERT INTO path_table (UserID, PermissionHash, DataCipherText, "
-            "KeywordCipherText) values (%d, 'ph%d', 'dct%d', 'kct%d')",
-            uid, uid, uid, uid);
-    sqlite3_exec(db, sql, 0, 0, 0);
-    int pid = (int)sqlite3_last_insert_rowid(db);
+    User *u = CreateUser(db, "dpk1", "kpk1");
+    Path *p = CreatePath(db, u->id, "hogehoge", "ctd1", "ctk1");
 
-    WritePermission *wp1 = CreateWritePermission(db, pid, uid);
+    WritePermission *wp1 = CreateWritePermission(db, p->id, u->id);
     WritePermission *wp2 = ReadWritePermission(db, wp1->id);
 
     if (DEBUG) {
