@@ -27,9 +27,6 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
 
         for (size_t i = 0; i < router->length; i++) {
             if (mg_http_match_uri(hm, get_uri(router, i))) {
-                echodebug("match:");
-                echodebug(get_uri(router, i));
-
                 get_route(router, i)(c, hm, db);
             }
         }

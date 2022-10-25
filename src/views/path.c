@@ -166,8 +166,6 @@ void api_path_search_view(struct mg_connection *c, struct mg_http_message *hm,
     if (strcmp(method, "GET") == 0) {
         json_t *body = get_api_path_search_request(hm->body);
 
-        echodebug("GET: api_path_search_view");
-
         if (body != NULL) {
             uint64_t userId =
                 (uint64_t)json_integer_value(json_object_get(body, "userId"));
