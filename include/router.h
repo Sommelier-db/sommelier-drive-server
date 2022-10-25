@@ -1,8 +1,7 @@
 #pragma once
 
-#include <sqlite3.h>
-
 #include "mongoose.h"
+#include "sommelier-db.h"
 #include "util.h"
 
 #define ROUTER_DEFAULT_ROUTES 16
