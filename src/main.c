@@ -59,6 +59,7 @@ int main(void) {
     OpenSommelierDB(dbms, DBFILE);
 
     InitalizeDatabase(dbms);
+    StartTransaction(dbms);
 
     router = initialize_router();
 

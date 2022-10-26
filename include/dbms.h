@@ -16,6 +16,9 @@ typedef struct sommelier_db {
 
 SommelierDBMS *initialize_sommelier_dbms();
 int OpenSommelierDB(SommelierDBMS *, const char *);
+void CloseSommelierDB(SommelierDBMS *);
+void StartTransaction(SommelierDBMS *);
+void CommitTransaction(SommelierDBMS *);
 char *current_transaction_name(SommelierDBMS *);
 sqlite3 *sommelier_connection(SommelierDBMS *);
 sqlite3 *sommelier_connection_with_insert(SommelierDBMS *);
