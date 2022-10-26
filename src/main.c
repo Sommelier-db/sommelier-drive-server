@@ -13,7 +13,11 @@ static const char *s_http_addr = HTTP_SERVICE_URL;  // HTTP port
 static Router *router;
 static sqlite3 *db = NULL;
 
+void not_found_view(struct mg_connection *c) { __ERROR_REPLY(c); }
+
 static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
+    int not_found = 1;
+
     if (ev == MG_EV_HTTP_MSG) {
         struct mg_http_message *hm = (struct mg_http_message *)ev_data;
         if (mg_http_match_uri(hm, "/api/test")) {
@@ -28,7 +32,14 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
         for (size_t i = 0; i < router->length; i++) {
             if (mg_http_match_uri(hm, get_uri(router, i))) {
                 get_route(router, i)(c, hm, db);
+                not_found = 0;
+                break;
             }
+        }
+
+        if (not_found) {
+            not_found_view(c);
+            not_found = 1;
         }
     }
     (void)fn_data;

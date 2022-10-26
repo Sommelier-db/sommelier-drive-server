@@ -34,3 +34,7 @@ clean:
 .PHONY: clean-all
 clean-all:
 	rm -rf $(OBJECTS) $(TARGET) $(TEST_TARGETS) $(LOG)/* $(DATA)/*
+
+.PHONY: exec
+exec: $(TARGET)
+	LD_LIBRARY_PATH=./sommelier-drive-cryptos/target/release/:../sommelier-db-build/install/lib $(TARGET)
