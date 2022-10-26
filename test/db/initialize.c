@@ -11,6 +11,8 @@ int main() {
     OpenSommelierDB(dbms, DBFILE);
 
     InitalizeDatabase(dbms);
+    StartTransaction(dbms);
+    CloseSommelierDB(dbms);
 
     logging_debug("success: test_db_initialize");
 

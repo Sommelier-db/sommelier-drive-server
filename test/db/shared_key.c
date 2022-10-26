@@ -12,6 +12,7 @@ int main() {
     SommelierDBMS *dbms = initialize_sommelier_dbms();
     OpenSommelierDB(dbms, DBFILE);
     InitalizeDatabase(dbms);
+    StartTransaction(dbms);
 
     User *u = CreateUser(dbms, "dpk1", "kpk1");
     Path *p = CreatePath(dbms, u->id, "ph1", "data_ct1", "keyword_ct1");
@@ -25,6 +26,8 @@ int main() {
         debug_shared_key(sk2);
         debug_shared_key(sk3);
     }
+
+    CloseSommelierDB(dbms);
 
     return 0;
 }

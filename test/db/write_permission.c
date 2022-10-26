@@ -12,6 +12,7 @@ int main() {
     SommelierDBMS *dbms = initialize_sommelier_dbms();
     OpenSommelierDB(dbms, DBFILE);
     InitalizeDatabase(dbms);
+    StartTransaction(dbms);
 
     User *u = CreateUser(dbms, "dpk1", "kpk1");
     Path *p = CreatePath(dbms, u->id, "hogehoge", "ctd1", "ctk1");
@@ -23,6 +24,8 @@ int main() {
         debug_write_permission(wp1);
         debug_write_permission(wp2);
     }
+
+    CloseSommelierDB(dbms);
 
     return 0;
 }

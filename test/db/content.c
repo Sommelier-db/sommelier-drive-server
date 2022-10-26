@@ -12,6 +12,7 @@ int main() {
     SommelierDBMS *dbms = initialize_sommelier_dbms();
     OpenSommelierDB(dbms, DBFILE);
     InitalizeDatabase(dbms);
+    StartTransaction(dbms);
 
     Content *c1 = CreateContent(dbms, "skh1", "pka1", "ctc1");
     Content *c2 = ReadContent(dbms, c1->id);
@@ -41,6 +42,8 @@ int main() {
             debug_content(v1->buf[i]);
         }
     }
+
+    CloseSommelierDB(dbms);
 
     return 0;
 }

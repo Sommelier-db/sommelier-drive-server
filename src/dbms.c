@@ -46,6 +46,27 @@ int OpenSommelierDB(SommelierDBMS *dbms, const char *dbfile) {
     return err;
 }
 
+void StartTransaction(SommelierDBMS *dbms) {
+    char sql_tr[64] = "";
+    sprintf(sql_tr, "BEGIN TRANSACTION %s;", current_transaction_name(dbms));
+    orm_execute_sql(dbms->db, sql_tr, 0, 0);
+}
+
+void CommitTransaction(SommelierDBMS *dbms) {
+    char sql_tr[64] = "";
+    sprintf(sql_tr, "COMMIT TRANSACTION %s;", current_transaction_name(dbms));
+    orm_execute_sql(dbms->db, sql_tr, 0, 0);
+}
+
+void CloseSommelierDB(SommelierDBMS *dbms) {
+    CommitTransaction(dbms);
+
+    sqlite3_close(dbms->db);
+    free(dbms->filepath);
+    free(dbms->transaction_name);
+    free(dbms);
+}
+
 sqlite3 *sommelier_connection(SommelierDBMS *dbms) {
     if (VERBOSE) {
         char msg[200] = "";
@@ -60,33 +81,28 @@ sqlite3 *sommelier_connection(SommelierDBMS *dbms) {
 sqlite3 *sommelier_connection_with_insert(SommelierDBMS *dbms) {
     sqlite3 *con = sommelier_connection(dbms);
 
-    if (dbms->insert_count % COMMIT_TRANSACTION_PER_INSERT == 0) {
+    if ((dbms->insert_count + 1) % COMMIT_TRANSACTION_PER_INSERT == 0) {
         if (DEBUG) {
             char msg[100] = "";
             sprintf(msg, "current insert count: %d", dbms->insert_count);
             logging_debug(msg);
         }
 
-        char start_tr[64] = "";
-        sprintf(start_tr, "BEGIN TRANSACTION %s;",
+        char sql_tr[64] = "";
+        sprintf(sql_tr, "COMMIT TRANSACTION %s;",
+                current_transaction_name(dbms));
+        orm_execute_sql(con, sql_tr, 0, 0);
+
+        dbms->insert_count++;
+
+        sprintf(sql_tr, "BEGIN TRANSACTION %s;",
                 current_transaction_name(dbms));
 
-        orm_execute_sql(con, start_tr, 0, 0);
-    } else if ((dbms->insert_count + 1) % COMMIT_TRANSACTION_PER_INSERT == 0) {
-        if (DEBUG) {
-            char msg[100] = "";
-            sprintf(msg, "current insert count: %d", dbms->insert_count);
-            logging_debug(msg);
-        }
-
-        char commit_tr[64] = "";
-        sprintf(commit_tr, "COMMIT TRANSACTION %s;",
-                current_transaction_name(dbms));
-
-        orm_execute_sql(con, commit_tr, 0, 0);
+        orm_execute_sql(con, sql_tr, 0, 0);
+    } else {
+        dbms->insert_count++;
     }
 
-    dbms->insert_count++;
     return con;
 }
 

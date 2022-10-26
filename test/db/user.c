@@ -12,6 +12,7 @@ int main() {
     SommelierDBMS *dbms = initialize_sommelier_dbms();
     OpenSommelierDB(dbms, DBFILE);
     InitalizeDatabase(dbms);
+    StartTransaction(dbms);
 
     printf("1. create user u.\n");
     User *u1 = CreateUser(dbms, "pkd1", "pkk1");
@@ -53,6 +54,8 @@ int main() {
     User *u5 = CreateUser(dbms, "'hoge'", "'fuga'");
     logging_debug(u5 == NULL ? "u5 is NULL (test success)"
                              : "u5 is not NULL (test fail)");
+
+    CloseSommelierDB(dbms);
 
     return 0;
 }
