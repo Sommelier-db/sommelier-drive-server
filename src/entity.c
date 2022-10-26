@@ -6,14 +6,19 @@ User *initialize_user() {
     User *u = INITIALIZE(User);
 
     if (u == NULL) {
-        errordebug("Memory allocation is failed. - User");
+        logging_error("Memory allocation is failed. - User");
         exit(1);
     }
 
-    u->data_public_key =
-        initialize_string(MAX_SIZE_PKE_KEY, "User::data_public_key");
-    u->keyword_public_key =
-        initialize_string(MAX_SIZE_PKSE_KEY, "User::keyword_public_key");
+    if (DEBUG) {
+        u->data_public_key =
+            alloc_string_debug(MAX_SIZE_PKE_KEY, "User::data_public_key");
+        u->keyword_public_key =
+            alloc_string_debug(MAX_SIZE_PKSE_KEY, "User::keyword_public_key");
+    } else {
+        u->data_public_key = alloc_string(MAX_SIZE_PKE_KEY);
+        u->keyword_public_key = alloc_string(MAX_SIZE_PKSE_KEY);
+    }
 
     return u;
 }
@@ -36,17 +41,17 @@ void set_user_id(User *u, uint64_t id) { u->id = id; }
 
 void set_user_data_public_key(User *u, const char *pkd) {
     if (pkd != NULL) {
-        u->data_public_key = safe_string_copy(u->data_public_key, pkd);
+        u->data_public_key = copy_string(u->data_public_key, pkd);
     } else if (DEBUG) {
-        echodebug("Arg pkd is NULL. - set_user_data_public_key");
+        logging_error("Arg pkd is NULL. - set_user_data_public_key");
     }
 }
 
 void set_user_keyword_public_key(User *u, const char *pkk) {
     if (pkk != NULL) {
-        u->keyword_public_key = safe_string_copy(u->keyword_public_key, pkk);
+        u->keyword_public_key = copy_string(u->keyword_public_key, pkk);
     } else if (DEBUG) {
-        echodebug("Arg pkk is NULL. - set_user_keyword_public_key");
+        logging_error("Arg pkk is NULL. - set_user_keyword_public_key");
     }
 }
 
@@ -58,24 +63,24 @@ json_t *decode_json_user(User *user) {
     json_t *json = json_object();
 
     if (json_object_set(json, "userId", json_integer(user->id)) < 0) {
-        errordebug("Setting JSON is failed. - User::id");
+        logging_error("Setting JSON is failed. - User::id");
         exit(1);
     }
 
     if (json_object_set(json, "dataPK", json_string(user->data_public_key)) <
         0) {
-        errordebug("Setting JSON is failed. - User::data_public_key");
+        logging_error("Setting JSON is failed. - User::data_public_key");
         exit(1);
     }
 
     if (json_object_set(json, "keywordPK",
                         json_string(user->keyword_public_key)) < 0) {
-        errordebug("Setting JSON is failed. - User::keyword_public_key");
+        logging_error("Setting JSON is failed. - User::keyword_public_key");
         exit(1);
     }
 
     if (json_object_set(json, "nonce", json_integer(user->nonce)) < 0) {
-        errordebug("Setting JSON is failed. - User::nonce");
+        logging_error("Setting JSON is failed. - User::nonce");
         exit(1);
     }
 
@@ -88,16 +93,22 @@ Path *initialize_path() {
     Path *p = INITIALIZE(Path);
 
     if (p == NULL) {
-        errordebug("Memory allocation is failed. - Path");
+        logging_error("Memory allocation is failed. - Path");
         exit(1);
     }
 
-    p->permission_hash =
-        initialize_string(MAX_SIZE_HASH, "Path::permission_hash");
-    p->data_cipher_text =
-        initialize_string(MAX_SIZE_PKE_CT, "Path::data_cipher_text");
-    p->keyword_cipher_text = initialize_string(MAX_SIZE_PKSE_KEYWORD_CT,
-                                               "Path::keyword_cipher_text");
+    if (DEBUG) {
+        p->permission_hash =
+            alloc_string_debug(MAX_SIZE_HASH, "Path::permission_hash");
+        p->data_cipher_text =
+            alloc_string_debug(MAX_SIZE_PKE_CT, "Path::data_cipher_text");
+        p->keyword_cipher_text = alloc_string_debug(
+            MAX_SIZE_PKSE_KEYWORD_CT, "Path::keyword_cipher_text");
+    } else {
+        p->permission_hash = alloc_string(MAX_SIZE_HASH);
+        p->data_cipher_text = alloc_string(MAX_SIZE_PKE_CT);
+        p->keyword_cipher_text = alloc_string(MAX_SIZE_PKSE_KEYWORD_CT);
+    }
 
     return p;
 }
@@ -124,25 +135,25 @@ void set_path_user_id(Path *p, uint64_t user_id) { p->user_id = user_id; }
 
 void set_path_permission_hash(Path *p, const char *ph) {
     if (ph != NULL) {
-        p->permission_hash = safe_string_copy(p->permission_hash, ph);
+        p->permission_hash = copy_string(p->permission_hash, ph);
     } else if (DEBUG) {
-        echodebug("Arg ph is NULL. - set_path_permission_hash");
+        logging_error("Arg ph is NULL. - set_path_permission_hash");
     }
 }
 
 void set_path_data_cipher_text(Path *p, const char *ctd) {
     if (ctd != NULL) {
-        p->data_cipher_text = safe_string_copy(p->data_cipher_text, ctd);
+        p->data_cipher_text = copy_string(p->data_cipher_text, ctd);
     } else if (DEBUG) {
-        echodebug("Arg ctd is NULL. - set_path_data_cipher_text");
+        logging_error("Arg ctd is NULL. - set_path_data_cipher_text");
     }
 }
 
 void set_path_keyword_cipher_text(Path *p, const char *ctk) {
     if (ctk != NULL) {
-        p->keyword_cipher_text = safe_string_copy(p->keyword_cipher_text, ctk);
+        p->keyword_cipher_text = copy_string(p->keyword_cipher_text, ctk);
     } else if (DEBUG) {
-        echodebug("Arg ctk is NULL. - set_path_keyword_cipher_text");
+        logging_error("Arg ctk is NULL. - set_path_keyword_cipher_text");
     }
 }
 
@@ -150,30 +161,30 @@ json_t *decode_json_path(Path *path) {
     json_t *json = json_object();
 
     if (json_object_set(json, "pathId", json_integer(path->id)) < 0) {
-        errordebug("Setting JSON is failed. - Path::id");
+        logging_error("Setting JSON is failed. - Path::id");
         exit(1);
     }
 
     if (json_object_set(json, "userId", json_integer(path->user_id)) < 0) {
-        errordebug("Setting JSON is failed. - Path::user_id");
+        logging_error("Setting JSON is failed. - Path::user_id");
         exit(1);
     }
 
     if (json_object_set(json, "permissionHash",
                         json_string(path->permission_hash)) < 0) {
-        errordebug("Setting JSON is failed. - Path::permission_hash");
+        logging_error("Setting JSON is failed. - Path::permission_hash");
         exit(1);
     }
 
     if (json_object_set(json, "dataCT", json_string(path->data_cipher_text)) <
         0) {
-        errordebug("Setting JSON is failed. - Path::data_cipher_text");
+        logging_error("Setting JSON is failed. - Path::data_cipher_text");
         exit(1);
     }
 
     if (json_object_set(json, "keywordCT",
                         json_string(path->keyword_cipher_text)) < 0) {
-        errordebug("Setting JSON is failed. - Path::keyword_cipher_text");
+        logging_error("Setting JSON is failed. - Path::keyword_cipher_text");
         exit(1);
     }
 
@@ -186,7 +197,7 @@ PathVector *initialize_path_vector() {
     PathVector *vec = INITIALIZE(PathVector);
 
     if (vec == NULL) {
-        errordebug("Memory allocation is failed. - PathVector");
+        logging_error("Memory allocation is failed. - PathVector");
         exit(1);
     }
 
@@ -195,7 +206,7 @@ PathVector *initialize_path_vector() {
     vec->buf = INITIALIZE_SIZE(Path *, vec->max_size);
 
     if (vec->buf == NULL) {
-        errordebug("Memory allocation is failed. - PathVector::buf");
+        logging_error("Memory allocation is failed. - PathVector::buf");
         exit(1);
     }
 
@@ -210,7 +221,7 @@ void finalize_path_vector(PathVector *vec) {
 size_t push_path_vector(PathVector *vec, Path *path) {
     if (vec->length == vec->max_size) {
         if (DEBUG) {
-            echodebug("resize_path_vector() called. - push_path_vector()");
+            logging_debug("resize_path_vector() called. - push_path_vector()");
         }
 
         resize_path_vector(vec);
@@ -231,7 +242,7 @@ size_t resize_path_vector(PathVector *vec) {
     vec->buf = (Path **)realloc(vec->buf, new_size * refsizeof(Path));
 
     if (vec->buf == NULL) {
-        errordebug("Memory re-allocation is failed. - PathVector::buf");
+        logging_error("Memory re-allocation is failed. - PathVector::buf");
         exit(1);
     }
 
@@ -256,12 +267,16 @@ SharedKey *initialize_shared_key() {
     SharedKey *sk = INITIALIZE(SharedKey);
 
     if (sk == NULL) {
-        errordebug("Memory allocation is failed. - SharedKey");
+        logging_error("Memory allocation is failed. - SharedKey");
         exit(1);
     }
 
-    sk->shared_key_cipher_text =
-        initialize_string(MAX_SIZE_PKE_CT, "SharedKey::shared_key_cipher_text");
+    if (DEBUG) {
+        sk->shared_key_cipher_text = alloc_string_debug(
+            MAX_SIZE_PKE_CT, "SharedKey::shared_key_cipher_text");
+    } else {
+        sk->shared_key_cipher_text = alloc_string(MAX_SIZE_PKE_CT);
+    }
 
     return sk;
 }
@@ -287,9 +302,10 @@ void set_shared_key_path_id(SharedKey *sk, uint64_t path_id) {
 void set_shared_key_share_key_cipher_text(SharedKey *sk, const char *ctsk) {
     if (ctsk != NULL) {
         sk->shared_key_cipher_text =
-            safe_string_copy(sk->shared_key_cipher_text, ctsk);
+            copy_string(sk->shared_key_cipher_text, ctsk);
     } else if (DEBUG) {
-        echodebug("Arg ctsk is NULL. - set_shared_key_share_key_cipher_text");
+        logging_debug(
+            "Arg ctsk is NULL. - set_shared_key_share_key_cipher_text");
     }
 }
 
@@ -297,18 +313,18 @@ json_t *decode_json_shared_key(SharedKey *sk) {
     json_t *json = json_object();
 
     if (json_object_set(json, "sharedKeyId", json_integer(sk->id)) < 0) {
-        errordebug("Setting JSON is failed. - SharedKey::id");
+        logging_error("Setting JSON is failed. - SharedKey::id");
         exit(1);
     }
 
     if (json_object_set(json, "pathId", json_integer(sk->path_id)) < 0) {
-        errordebug("Setting JSON is failed. - SharedKey::path_id");
+        logging_error("Setting JSON is failed. - SharedKey::path_id");
         exit(1);
     }
 
     if (json_object_set(json, "ct", json_string(sk->shared_key_cipher_text)) <
         0) {
-        errordebug(
+        logging_error(
             "Setting JSON is failed. - SharedKey::shared_key_cipher_text");
         exit(1);
     }
@@ -322,12 +338,17 @@ AuthorizationSeed *initialize_authorization_seed() {
     AuthorizationSeed *as = INITIALIZE(AuthorizationSeed);
 
     if (as == NULL) {
-        errordebug("Memory allocation is failed. - AuthorizationSeed");
+        logging_error("Memory allocation is failed. - AuthorizationSeed");
         exit(1);
     }
 
-    as->authorization_seed_cipher_text = initialize_string(
-        MAX_SIZE_PKE_CT, "AuthorizationSeed::authorization_seed_cipher_text");
+    if (DEBUG) {
+        as->authorization_seed_cipher_text = alloc_string_debug(
+            MAX_SIZE_PKE_CT,
+            "AuthorizationSeed::authorization_seed_cipher_text");
+    } else {
+        as->authorization_seed_cipher_text = alloc_string(MAX_SIZE_PKE_CT);
+    }
 
     return as;
 }
@@ -356,9 +377,9 @@ void set_authorization_seed_authorization_seed_cipher_text(
     AuthorizationSeed *as, const char *ctas) {
     if (ctas != NULL) {
         as->authorization_seed_cipher_text =
-            safe_string_copy(as->authorization_seed_cipher_text, ctas);
+            copy_string(as->authorization_seed_cipher_text, ctas);
     } else if (DEBUG) {
-        echodebug(
+        logging_debug(
             "Arg ctas is NULL. - "
             "set_authorization_seed_authorization_seed_cipher_text");
     }
@@ -368,18 +389,18 @@ json_t *decode_json_authorization_seed(AuthorizationSeed *as) {
     json_t *json = json_object();
 
     if (json_object_set(json, "authorizationId", json_integer(as->id)) < 0) {
-        errordebug("Setting JSON is failed. - AuthorizationSeed::id");
+        logging_error("Setting JSON is failed. - AuthorizationSeed::id");
         exit(1);
     }
 
     if (json_object_set(json, "pathId", json_integer(as->path_id)) < 0) {
-        errordebug("Setting JSON is failed. - AuthorizationSeed::path_id");
+        logging_error("Setting JSON is failed. - AuthorizationSeed::path_id");
         exit(1);
     }
 
     if (json_object_set(json, "ct",
                         json_string(as->authorization_seed_cipher_text)) < 0) {
-        errordebug(
+        logging_error(
             "Setting JSON is failed. - "
             "AuthorizationSeed::authorization_seed_cipher_text");
         exit(1);
@@ -394,16 +415,22 @@ Content *initialize_content() {
     Content *c = INITIALIZE(Content);
 
     if (c == NULL) {
-        errordebug("Memory allocation is failed. - Content");
+        logging_error("Memory allocation is failed. - Content");
         exit(1);
     }
 
-    c->shared_key_hash =
-        initialize_string(MAX_SIZE_HASH, "Content::shared_key_hash");
-    c->authorization_public_key = initialize_string(
-        MAX_SIZE_PKE_KEY, "Content::authorization_public_key");
-    c->content_cipher_text = initialize_string(MAX_SIZE_PKSE_CONTENT_CT,
-                                               "Content::content_cipher_text");
+    if (DEBUG) {
+        c->shared_key_hash =
+            alloc_string_debug(MAX_SIZE_HASH, "Content::shared_key_hash");
+        c->authorization_public_key = alloc_string_debug(
+            MAX_SIZE_PKE_KEY, "Content::authorization_public_key");
+        c->content_cipher_text = alloc_string_debug(
+            MAX_SIZE_PKSE_CONTENT_CT, "Content::content_cipher_text");
+    } else {
+        c->shared_key_hash = alloc_string(MAX_SIZE_HASH);
+        c->authorization_public_key = alloc_string(MAX_SIZE_PKE_KEY);
+        c->content_cipher_text = alloc_string(MAX_SIZE_PKSE_CONTENT_CT);
+    }
 
     return c;
 }
@@ -428,18 +455,19 @@ void set_content_id(Content *c, uint64_t id) { c->id = id; }
 
 void set_content_shared_key_hash(Content *c, const char *skh) {
     if (skh != NULL) {
-        c->shared_key_hash = safe_string_copy(c->shared_key_hash, skh);
+        c->shared_key_hash = copy_string(c->shared_key_hash, skh);
     } else if (DEBUG) {
-        echodebug("Arg skh is NULL. - set_content_shared_key_hash");
+        logging_error("Arg skh is NULL. - set_content_shared_key_hash");
     }
 }
 
 void set_content_authorization_public_key(Content *c, const char *pka) {
     if (pka != NULL) {
         c->authorization_public_key =
-            safe_string_copy(c->authorization_public_key, pka);
+            copy_string(c->authorization_public_key, pka);
     } else if (DEBUG) {
-        echodebug("Arg pka is NULL. - set_content_authorization_public_key");
+        logging_debug(
+            "Arg pka is NULL. - set_content_authorization_public_key");
     }
 }
 
@@ -447,9 +475,9 @@ void set_content_nonce(Content *c, uint64_t nonce) { c->nonce = nonce; }
 
 void set_content_content_cipher_text(Content *c, const char *ctc) {
     if (ctc != NULL) {
-        c->content_cipher_text = safe_string_copy(c->content_cipher_text, ctc);
+        c->content_cipher_text = copy_string(c->content_cipher_text, ctc);
     } else if (DEBUG) {
-        echodebug("Arg ctc is NULL. - set_content_content_cipher_text");
+        logging_error("Arg ctc is NULL. - set_content_content_cipher_text");
     }
 }
 
@@ -459,30 +487,30 @@ json_t *decode_json_content(Content *c) {
     json_t *json = json_object();
 
     if (json_object_set(json, "contentsId", json_integer(c->id)) < 0) {
-        errordebug("Setting JSON is failed. - Content::id");
+        logging_error("Setting JSON is failed. - Content::id");
         exit(1);
     }
 
     if (json_object_set(json, "sharedKeyHash",
                         json_string(c->shared_key_hash)) < 0) {
-        errordebug("Setting JSON is failed. - Content::shared_key_hash");
+        logging_error("Setting JSON is failed. - Content::shared_key_hash");
         exit(1);
     }
 
     if (json_object_set(json, "authorizationPK",
                         json_string(c->authorization_public_key)) < 0) {
-        errordebug(
+        logging_error(
             "Setting JSON is failed. - Content::authorization_public_key");
         exit(1);
     }
 
     if (json_object_set(json, "nonce", json_integer(c->nonce)) < 0) {
-        errordebug("Setting JSON is failed. - Content::nonce");
+        logging_error("Setting JSON is failed. - Content::nonce");
         exit(1);
     }
 
     if (json_object_set(json, "ct", json_string(c->content_cipher_text)) < 0) {
-        errordebug("Setting JSON is failed. - Content::content_cipher_text");
+        logging_error("Setting JSON is failed. - Content::content_cipher_text");
         exit(1);
     }
 
@@ -495,7 +523,7 @@ ContentVector *initialize_content_vector() {
     ContentVector *vec = INITIALIZE(ContentVector);
 
     if (vec == NULL) {
-        errordebug("Memory allocation is failed. - ContentVector");
+        logging_error("Memory allocation is failed. - ContentVector");
         exit(1);
     }
 
@@ -504,7 +532,7 @@ ContentVector *initialize_content_vector() {
     vec->buf = INITIALIZE_SIZE(Content *, vec->max_size);
 
     if (vec->buf == NULL) {
-        errordebug("Memory allocation is failed. - ContentVector::buf");
+        logging_error("Memory allocation is failed. - ContentVector::buf");
         exit(1);
     }
 
@@ -519,9 +547,8 @@ void finalize_content_vector(ContentVector *vec) {
 size_t push_content_vector(ContentVector *vec, Content *content) {
     if (vec->length == vec->max_size) {
         if (DEBUG) {
-            printf(
-                "[DEBUG] resize_content_vector() called. - "
-                "push_content_vector()\n");
+            logging_debug(
+                "resize_content_vector() called. - push_content_vector");
         }
 
         resize_content_vector(vec);
@@ -542,7 +569,7 @@ size_t resize_content_vector(ContentVector *vec) {
     vec->buf = (Content **)realloc(vec->buf, new_size * refsizeof(Content));
 
     if (vec->buf == NULL) {
-        errordebug("Memory re-allocation is failed. - ContentVector::buf");
+        logging_error("Memory re-allocation is failed. - ContentVector::buf");
         exit(1);
     }
 
@@ -567,7 +594,7 @@ WritePermission *initialize_write_permission() {
     WritePermission *wp = INITIALIZE(WritePermission);
 
     if (wp == NULL) {
-        errordebug("Memory allocation is failed. - WritePermission");
+        logging_error("Memory allocation is failed. - WritePermission");
         exit(1);
     }
 
@@ -597,17 +624,17 @@ json_t *decode_json_write_permission(WritePermission *wp) {
     json_t *json = json_object();
 
     if (json_object_set(json, "wPermissionId", json_integer(wp->id)) < 0) {
-        errordebug("Setting JSON is failed. - WritePermission::id");
+        logging_error("Setting JSON is failed. - WritePermission::id");
         exit(1);
     }
 
     if (json_object_set(json, "pathId", json_integer(wp->path_id)) < 0) {
-        errordebug("Setting JSON is failed. - WritePermission::path_id");
+        logging_error("Setting JSON is failed. - WritePermission::path_id");
         exit(1);
     }
 
     if (json_object_set(json, "userId", json_integer(wp->user_id)) < 0) {
-        errordebug("Setting JSON is failed. - WritePermission::user_id");
+        logging_error("Setting JSON is failed. - WritePermission::user_id");
         exit(1);
     }
 
@@ -619,41 +646,96 @@ json_t *decode_json_write_permission(WritePermission *wp) {
 #if DEBUG
 
 void debug_user(User *u) {
-    fprintf(stdout, "<User id: %ld, pkd: %s, pkk: %s, nonce: %ld>\n", u->id,
-            u->data_public_key, u->keyword_public_key, u->nonce);
-    fflush(stdout);
+    if (u != NULL) {
+        if (VERBOSE) {
+            char msg[256 + MAX_SIZE_PKE_KEY + MAX_SIZE_PKSE_KEY] = "";
+            sprintf(msg, "<User id: %ld, pkd: '%s', pkk: '%s', nonce: %ld>",
+                    u->id, u->data_public_key, u->keyword_public_key, u->nonce);
+            logging_debug(msg);
+        } else {
+            char msg[256] = "";
+            sprintf(msg, "<User id: %ld, nonce: %ld>", u->id, u->nonce);
+            logging_debug(msg);
+        }
+    } else {
+        logging_error("User is NULL.");
+    }
 }
 
 void debug_path(Path *p) {
-    fprintf(stdout, "<Path id: %ld, uid: %ld, ph: %s, ctd: %s, ctk: %s>\n",
-            p->id, p->user_id, p->permission_hash, p->data_cipher_text,
-            p->keyword_cipher_text);
-    fflush(stdout);
+    if (p != NULL) {
+        if (VERBOSE) {
+            char msg[256 + MAX_SIZE_HASH + MAX_SIZE_PKE_CT +
+                     MAX_SIZE_PKSE_KEYWORD_CT] = "";
+            sprintf(msg,
+                    "<Path id: %ld, user_id: %ld, ph: '%s', data_ct: '%s', "
+                    "keyword_ct: "
+                    "'%s'>",
+                    p->id, p->user_id, p->permission_hash, p->data_cipher_text,
+                    p->keyword_cipher_text);
+            logging_debug(msg);
+        } else {
+            char msg[256] = "";
+            sprintf(msg, "<Path id: %ld, uid: %ld>", p->id, p->user_id);
+            logging_debug(msg);
+        }
+    } else {
+        logging_error("Path is NULL.");
+    }
 }
 
 void debug_shared_key(SharedKey *sk) {
-    fprintf(stdout, "<SharedKey id: %ld, pid: %ld, ctsk: %s>\n", sk->id,
-            sk->path_id, sk->shared_key_cipher_text);
-    fflush(stdout);
+    if (sk != NULL) {
+        if (VERBOSE) {
+            char msg[256 + MAX_SIZE_PKE_CT] = "";
+            sprintf(msg,
+                    "<SharedKey id: %ld, path_id: %ld, shared_key_ct: '%s'>",
+                    sk->id, sk->path_id, sk->shared_key_cipher_text);
+            logging_debug(msg);
+        } else {
+            char msg[256] = "";
+            sprintf(msg, "<SharedKey id: %ld, pid: %ld>", sk->id, sk->path_id);
+            logging_debug(msg);
+        }
+    } else {
+        logging_error("SharedKey is NULL.");
+    }
 }
 
 void debug_content(Content *c) {
     if (c != NULL) {
-        fprintf(stdout, "<Content id: %ld, skh: %s, ctc: %s>\n", c->id,
-                c->shared_key_hash, c->content_cipher_text);
-        fflush(stdout);
+        if (VERBOSE) {
+            char msg[256 + MAX_SIZE_HASH + MAX_SIZE_PKSE_CONTENT_CT] = "";
+            sprintf(
+                msg,
+                "<Content id: %ld, shared_key_hash: '%s', content_ct: '%s'>",
+                c->id, c->shared_key_hash, c->content_cipher_text);
+            logging_debug(msg);
+        } else {
+            char msg[256] = "";
+            sprintf(msg, "<Content id: %ld>", c->id);
+            logging_debug(msg);
+        }
     } else {
-        errordebug("Content is NULL.");
+        logging_error("Content is NULL.");
     }
 }
 
 void debug_write_permission(WritePermission *wp) {
     if (wp != NULL) {
-        fprintf(stdout, "<WritePermission id: %ld, pid: %ld, uid: %ld>\n",
-                wp->id, wp->path_id, wp->user_id);
-        fflush(stdout);
+        char msg[256] = "";
+        if (VERBOSE) {
+            sprintf(msg,
+                    "<WritePermission id: %ld, path_id: %ld, user_id: %ld>",
+                    wp->id, wp->path_id, wp->user_id);
+        } else {
+            sprintf(msg, "<WritePermission id: %ld, pid: %ld, uid: %ld>",
+                    wp->id, wp->path_id, wp->user_id);
+        }
+        logging_debug(msg);
+
     } else {
-        errordebug("WritePermission is NULL.");
+        logging_error("WritePermission is NULL.");
     }
 }
 
