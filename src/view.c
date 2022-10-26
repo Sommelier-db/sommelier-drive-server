@@ -5,9 +5,10 @@ char *request_method(struct mg_str s) {
     strncpy(method, s.ptr, s.len);
     method[s.len] = '\0';
 
-    if (VERBOSE) {
-        echodebug("call request_method().");
-        echodebug(method);
+    if (DEBUG) {
+        char msg[30] = "";
+        sprintf(msg, "Request HTTP method: %s", method);
+        logging_debug(msg);
     }
 
     return method;
