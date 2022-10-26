@@ -4,33 +4,42 @@ json_t *get_api_user_request(struct mg_str s) {
     json_error_t err;
     json_t *j = json_loads(s.ptr, 0, &err);
 
-    // userId: int
-    if (json_has_key(j, "userId", JSON_INTEGER)) {
-        return j;
+    if (j != NULL) {
+        // userId: int
+        int c = json_has_key(j, "userId", JSON_INTEGER);
+
+        if (!c) {
+            free(j);
+            j = NULL;
+        }
     } else {
-        free(j);
-        return NULL;
+        logging_error("json is NULL. - get_api_user_request");
     }
+
+    return j;
 }
 
 json_t *post_api_user_request(struct mg_str s) {
     json_error_t err;
     json_t *j = json_loads(s.ptr, 0, &err);
 
-    // dataPK: string, keywordPK: string, permissionHash: string,
-    // dataCT: string, keywordCT: string
-    int c = json_has_key(j, "dataPK", JSON_STRING) &&
-            json_has_key(j, "keywordPK", JSON_STRING) &&
-            // json_has_key(j, "permissionHash", JSON_STRING) &&
-            json_has_key(j, "dataCT", JSON_STRING) &&
-            json_has_key(j, "keywordCT", JSON_STRING);
+    if (j != NULL) {
+        // dataPK: string, keywordPK: string, dataCT: string, keywordCT: string
+        int c = json_has_key(j, "dataPK", JSON_STRING) &&
+                json_has_key(j, "keywordPK", JSON_STRING) &&
+                // json_has_key(j, "permissionHash", JSON_STRING) &&
+                json_has_key(j, "dataCT", JSON_STRING) &&
+                json_has_key(j, "keywordCT", JSON_STRING);
 
-    if (c) {
-        return j;
+        if (!c) {
+            free(j);
+            j = NULL;
+        }
     } else {
-        free(j);
-        return NULL;
+        logging_error("json is NULL. - post_api_user_request");
     }
+
+    return j;
 }
 
 // GET, POST /api/user
@@ -50,18 +59,7 @@ void api_user_view(struct mg_connection *c, struct mg_http_message *hm,
         json_t *body = get_api_user_request(hm->body);
 
         if (DEBUG) {
-            char *dumped = json_dumps(body, 0);
-
-            char _body[160] = "";
-            strncpy(_body, dumped, 160);
-            _body[159] = '\0';
-
-            char msg[180] = "";
-            char *suffix = strlen(dumped) > 160 ? "..." : "";
-            sprintf(msg, "HTTP Body: %s%s", _body, suffix);
-
-            logging_debug(msg);
-            free(dumped);
+            logging_http_body(hm);
         }
 
         if (body != NULL) {
@@ -80,6 +78,8 @@ void api_user_view(struct mg_connection *c, struct mg_http_message *hm,
             } else {
                 __ERROR_REPLY(c);
             }
+
+            free(body);
         } else {
             __ERROR_REPLY(c);
         }
@@ -87,18 +87,7 @@ void api_user_view(struct mg_connection *c, struct mg_http_message *hm,
         json_t *body = post_api_user_request(hm->body);
 
         if (DEBUG) {
-            char *dumped = json_dumps(body, 0);
-
-            char _body[160] = "";
-            strncpy(_body, dumped, 160);
-            _body[159] = '\0';
-
-            char msg[180] = "";
-            char *suffix = strlen(dumped) > 160 ? "..." : "";
-            sprintf(msg, "HTTP Body: %s%s", _body, suffix);
-
-            logging_debug(msg);
-            free(dumped);
+            logging_http_body(hm);
         }
 
         if (body != NULL) {
@@ -129,6 +118,8 @@ void api_user_view(struct mg_connection *c, struct mg_http_message *hm,
             } else {
                 __ERROR_REPLY(c);
             }
+
+            free(body);
         } else {
             __ERROR_REPLY(c);
         }

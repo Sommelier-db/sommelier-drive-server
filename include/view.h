@@ -23,3 +23,5 @@ char *request_uri(struct mg_http_message *);
 char *request_method(struct mg_http_message *);
 
 int json_has_key(json_t *, const char *, int);
+
+void logging_http_body(struct mg_http_message *hm);

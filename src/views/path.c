@@ -53,18 +53,7 @@ void api_path_view(struct mg_connection *c, struct mg_http_message *hm,
         json_t *body = get_api_path_request(hm->body);
 
         if (DEBUG) {
-            char *dumped = json_dumps(body, 0);
-
-            char _body[160] = "";
-            strncpy(_body, dumped, 160);
-            _body[159] = '\0';
-
-            char msg[180] = "";
-            char *suffix = strlen(dumped) > 160 ? "..." : "";
-            sprintf(msg, "HTTP Body: %s%s", _body, suffix);
-
-            logging_debug(msg);
-            free(dumped);
+            logging_http_body(hm);
         }
 
         if (body != NULL) {
@@ -93,18 +82,7 @@ void api_path_view(struct mg_connection *c, struct mg_http_message *hm,
         json_t *body = post_api_path_request(hm->body);
 
         if (DEBUG) {
-            char *dumped = json_dumps(body, 0);
-
-            char _body[160] = "";
-            strncpy(_body, dumped, 160);
-            _body[159] = '\0';
-
-            char msg[180] = "";
-            char *suffix = strlen(dumped) > 160 ? "..." : "";
-            sprintf(msg, "HTTP Body: %s%s", _body, suffix);
-
-            logging_debug(msg);
-            free(dumped);
+            logging_http_body(hm);
         }
 
         if (body != NULL) {
@@ -185,18 +163,7 @@ void api_path_children_view(struct mg_connection *c, struct mg_http_message *hm,
         json_t *body = get_api_path_children_request(hm->body);
 
         if (DEBUG) {
-            char *dumped = json_dumps(body, 0);
-
-            char _body[160] = "";
-            strncpy(_body, dumped, 160);
-            _body[159] = '\0';
-
-            char msg[180] = "";
-            char *suffix = strlen(dumped) > 160 ? "..." : "";
-            sprintf(msg, "HTTP Body: %s%s", _body, suffix);
-
-            logging_debug(msg);
-            free(dumped);
+            logging_http_body(hm);
         }
 
         if (body != NULL) {
@@ -263,18 +230,7 @@ void api_path_search_view(struct mg_connection *c, struct mg_http_message *hm,
         json_t *body = get_api_path_search_request(hm->body);
 
         if (DEBUG) {
-            char *dumped = json_dumps(body, 0);
-
-            char _body[160] = "";
-            strncpy(_body, dumped, 160);
-            _body[159] = '\0';
-
-            char msg[180] = "";
-            char *suffix = strlen(dumped) > 160 ? "..." : "";
-            sprintf(msg, "HTTP Body: %s%s", _body, suffix);
-
-            logging_debug(msg);
-            free(dumped);
+            logging_http_body(hm);
         }
 
         if (body != NULL) {
