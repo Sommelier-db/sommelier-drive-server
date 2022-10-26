@@ -220,7 +220,7 @@ void finalize_path_vector(PathVector *vec) {
 
 size_t push_path_vector(PathVector *vec, Path *path) {
     if (vec->length == vec->max_size) {
-        if (DEBUG) {
+        if (VERBOSE) {
             logging_debug("resize_path_vector() called. - push_path_vector()");
         }
 
@@ -546,7 +546,7 @@ void finalize_content_vector(ContentVector *vec) {
 
 size_t push_content_vector(ContentVector *vec, Content *content) {
     if (vec->length == vec->max_size) {
-        if (DEBUG) {
+        if (VERBOSE) {
             logging_debug(
                 "resize_content_vector() called. - push_content_vector");
         }

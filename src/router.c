@@ -4,7 +4,7 @@ Router *initialize_router() {
     Router *r = INITIALIZE(Router);
 
     if (r == NULL) {
-        errordebug("Memory allocation is failed. - Router");
+        logging_error("Memory allocation is failed. - Router");
         exit(1);
     }
 
@@ -14,14 +14,14 @@ Router *initialize_router() {
     r->routes = INITIALIZE_SIZE(Route, ROUTER_DEFAULT_ROUTES);
 
     if (r->routes == NULL) {
-        errordebug("Memory allocation is failed. - Router::routes");
+        logging_error("Memory allocation is failed. - Router::routes");
         exit(1);
     }
 
     r->uris = INITIALIZE_SIZE(char *, ROUTER_DEFAULT_ROUTES);
 
     if (r->uris == NULL) {
-        errordebug("Memory allocation is failed. - Router::uris");
+        logging_error("Memory allocation is failed. - Router::uris");
         exit(1);
     }
 
@@ -39,7 +39,7 @@ void finalize_router(Router *r) {
 size_t push_new_route(Router *r, const char *uri, Route fn) {
     if (r->length == r->max_size) {
         if (VERBOSE) {
-            echodebug("resize_path_vector() called. - push_new_route()");
+            logging_debug("resize_path_vector() called. - push_new_route()");
         }
 
         resize_router(r);
@@ -48,7 +48,7 @@ size_t push_new_route(Router *r, const char *uri, Route fn) {
     char *str = INITIALIZE_STRING(strlen(uri) + 1);
 
     if (str == NULL) {
-        errordebug("Memory allocation is failed. - Route::uris[i]");
+        logging_error("Memory allocation is failed. - Route::uris[i]");
         exit(1);
     }
 
@@ -65,13 +65,13 @@ size_t resize_router(Router *r) {
 
     r->routes = (Route *)realloc(r->routes, new_size * sizeof(Route));
     if (r->routes == NULL) {
-        errordebug("Memory re-allocation is failed. - Route::routes");
+        logging_error("Memory re-allocation is failed. - Route::routes");
         exit(1);
     }
 
     r->uris = (char **)realloc(r->uris, new_size * sizeof(char *));
     if (r->uris == NULL) {
-        errordebug("Memory re-allocation is failed. - Route::uris");
+        logging_error("Memory re-allocation is failed. - Route::uris");
         exit(1);
     }
 
@@ -79,11 +79,27 @@ size_t resize_router(Router *r) {
 }
 
 char *get_uri(Router *r, size_t i) {
-    // TODO: iのrange check
-    return r->uris[i];
+    if (i < r->length) {
+        return r->uris[i];
+    } else {
+        char msg[200] = "";
+        sprintf(msg, "get_uri: index (%ld) is out of range [0, %ld).", i,
+                r->length);
+        logging_error(msg);
+
+        return NULL;
+    }
 }
 
 Route get_route(Router *r, size_t i) {
-    // TODO: iのrange check
-    return r->routes[i];
+    if (i < r->length) {
+        return r->routes[i];
+    } else {
+        char msg[200] = "";
+        sprintf(msg, "get_uri: index (%ld) is out of range [0, %ld).", i,
+                r->length);
+        logging_error(msg);
+
+        return NULL;
+    }
 }
