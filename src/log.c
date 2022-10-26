@@ -10,19 +10,17 @@ void logging_debug(char *msg) {
     fflush(stdout);
 }
 
-#if DEBUG
 void debug_string_pointer(const char *field, const char *s) {
     printf("[DEBUG] debug char *: %s = \"%s\" (@ %p)\n", field, s, s);
     fflush(stdout);
 }
 
 void debug_uint_pointer(const char *field, uint64_t id) {
-    printf("[DEBUG] debug int %s = %ld (%p)\n", field, id, &id);
+    printf("[DEBUG] debug uint: %s = %ld (%p)\n", field, id, &id);
     fflush(stdout);
 }
 
 void debug_void_pointer(const char *field, void *p) {
-    printf("[DEBUG] debug void * %s @ %p\n", field, p);
+    printf("[DEBUG] debug void *: %s @ %p\n", field, p);
     fflush(stdout);
 }
-#endif
