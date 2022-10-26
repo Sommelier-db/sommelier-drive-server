@@ -1,5 +1,6 @@
 #include <jansson.h>
 
+#include "dbms.h"
 #include "mongoose.h"
 #include "orm.h"
 #include "router.h"
@@ -11,7 +12,7 @@ static const char *s_http_addr = HTTP_SERVICE_URL;  // HTTP port
 // static const char *s_https_addr = "https://0.0.0.0:8443";  // HTTPS port
 
 static Router *router;
-static sqlite3 *db = NULL;
+static SommelierDBMS *dbms = NULL;
 
 void not_found_view(struct mg_connection *c) { __ERROR_REPLY(c); }
 
@@ -31,7 +32,7 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
 
         for (size_t i = 0; i < router->length; i++) {
             if (mg_http_match_uri(hm, get_uri(router, i))) {
-                get_route(router, i)(c, hm, db);
+                get_route(router, i)(c, hm, dbms);
                 not_found = 0;
                 break;
             }
@@ -48,14 +49,17 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
 int main(void) {
     struct mg_mgr mgr;  // Event manager
 
-    int err = sqlite3_open(DBFILE, &db);
-    if (err) {
-        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-        sqlite3_close(db);
-        exit(1);
-    }
+    // int err = sqlite3_open(DBFILE, &(dbms->db));
+    // if (err) {
+    //     fprintf(stderr, "Can't open database: %s\n",
+    //     sqlite3_errmsg(dbms->db)); sqlite3_close(dbms->db); exit(1);
+    // }
 
-    InitalizeDatabase(db);
+    dbms = initialize_sommelier_dbms();
+    OpenSommelierDB(dbms, DBFILE);
+
+    InitalizeDatabase(dbms);
+    StartTransaction(dbms);
 
     router = initialize_router();
 

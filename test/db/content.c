@@ -9,19 +9,14 @@
 int main() {
     printf("test content create and read:\n");
 
-    sqlite3 *db = NULL;
-    int err = sqlite3_open(DBFILE, &db);
-    if (err) {
-        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-        sqlite3_close(db);
-        exit(1);
-    }
+    SommelierDBMS *dbms = initialize_sommelier_dbms();
+    OpenSommelierDB(dbms, DBFILE);
+    InitalizeDatabase(dbms);
+    StartTransaction(dbms);
 
-    InitalizeDatabase(db);
-
-    Content *c1 = CreateContent(db, "skh1", "pka1", "ctc1");
-    Content *c2 = ReadContent(db, c1->id);
-    Content *c3 = ReadContent(db, c1->id);
+    Content *c1 = CreateContent(dbms, "skh1", "pka1", "ctc1");
+    Content *c2 = ReadContent(dbms, c1->id);
+    Content *c3 = ReadContent(dbms, c1->id);
 
     if (DEBUG) {
         debug_content(c1);
@@ -31,22 +26,24 @@ int main() {
 
     printf("test content filter by SharedKeyHash:\n");
 
-    Content *c4 = CreateContent(db, "skhx", "pka4", "ctc4");
+    Content *c4 = CreateContent(dbms, "skhx", "pka4", "ctc4");
     finalize_content(c4);
-    Content *c5 = CreateContent(db, "skhy", "pka5", "ctc5");
+    Content *c5 = CreateContent(dbms, "skhy", "pka5", "ctc5");
     finalize_content(c5);
-    Content *c6 = CreateContent(db, "skhx", "pka6", "ctc6");
+    Content *c6 = CreateContent(dbms, "skhx", "pka6", "ctc6");
     finalize_content(c6);
-    Content *c7 = CreateContent(db, "skhy", "pka7", "ctc7");
+    Content *c7 = CreateContent(dbms, "skhy", "pka7", "ctc7");
     finalize_content(c7);
 
-    ContentVector *v1 = FilterBySharedKeyHash(db, "skhx");
+    ContentVector *v1 = FilterBySharedKeyHash(dbms, "skhx");
 
     if (DEBUG) {
         for (int i = 0; i < v1->length; i++) {
             debug_content(v1->buf[i]);
         }
     }
+
+    CloseSommelierDB(dbms);
 
     return 0;
 }

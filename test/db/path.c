@@ -9,20 +9,15 @@
 int main() {
     printf("test path create and read:\n");
 
-    sqlite3 *db = NULL;
-    int err = sqlite3_open(DBFILE, &db);
-    if (err) {
-        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-        sqlite3_close(db);
-        exit(1);
-    }
+    SommelierDBMS *dbms = initialize_sommelier_dbms();
+    OpenSommelierDB(dbms, DBFILE);
+    InitalizeDatabase(dbms);
+    StartTransaction(dbms);
 
-    InitalizeDatabase(db);
-
-    User *u = CreateUser(db, "pkepk1111", "pksepk1111");
-    Path *p = CreatePath(db, u->id, "ph1111", "ctd1111", "ctk1111");
-    Path *p1 = ReadPath(db, p->id);
-    Path *p2 = ReadPath(db, p->id);
+    User *u = CreateUser(dbms, "pkepk1111", "pksepk1111");
+    Path *p = CreatePath(dbms, u->id, "ph1111", "ctd1111", "ctk1111");
+    Path *p1 = ReadPath(dbms, p->id);
+    Path *p2 = ReadPath(dbms, p->id);
 
     if (DEBUG) {
         debug_path(p);
@@ -30,17 +25,22 @@ int main() {
         debug_path(p2);
     }
 
-    for (int i = 0; i < 3; i++) {
-        Path *p = CreatePath(db, u->id, "ph", "ctd", "ctk");
+    for (int i = 0; i < 200; i++) {
+        Path *p = CreatePath(dbms, u->id, "ph", "ctd", "ctk");
         finalize_path(p);
     }
 
-    PathVector *vec = FilterByPermissionHash(db, "ph");
+    PathVector *vec = FilterByPermissionHash(dbms, "ph");
 
-    PathVector *vec2 = SearchEncryptedPath(db, u->id, "trapdoor");
+    // PathVector *vec2 = SearchEncryptedPath(dbms, u->id, "trapdoor");
 
     printf("vector size: %ld\n", vec->length);
-    for (int i = 0; i < vec->length; i++) {
-        debug_path(vec->buf[i]);
-    }
+    // for (int i = 0; i < vec->length; i++) {
+    //     debug_path(vec->buf[i]);
+    // }
+    finalize_path_vector(vec);
+
+    CloseSommelierDB(dbms);
+
+    return 0;
 }

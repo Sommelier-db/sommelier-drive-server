@@ -34,7 +34,7 @@ json_t *post_api_shared_key_request(struct mg_str s) {
 }
 
 void api_shared_key_view(struct mg_connection *c, struct mg_http_message *hm,
-                         sqlite3 *db) {
+                         SommelierDBMS *db) {
     char *method = request_method(hm);
 
     if (DEBUG) {

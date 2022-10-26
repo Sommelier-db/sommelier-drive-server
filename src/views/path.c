@@ -37,7 +37,7 @@ json_t *post_api_path_request(struct mg_str s) {
 
 // GET, POST /api/file-path
 void api_path_view(struct mg_connection *c, struct mg_http_message *hm,
-                   sqlite3 *db) {
+                   SommelierDBMS *db) {
     char *method = request_method(hm);
 
     if (DEBUG) {
@@ -123,7 +123,7 @@ json_t *get_api_path_children_request(struct mg_str s) {
 
 // GET /api/file-path/children
 void api_path_children_view(struct mg_connection *c, struct mg_http_message *hm,
-                            sqlite3 *db) {
+                            SommelierDBMS *db) {
     char *method = request_method(hm);
 
     if (DEBUG) {
@@ -178,7 +178,7 @@ json_t *get_api_path_search_request(struct mg_str s) {
 }
 
 void api_path_search_view(struct mg_connection *c, struct mg_http_message *hm,
-                          sqlite3 *db) {
+                          SommelierDBMS *db) {
     char *method = request_method(hm);
 
     if (DEBUG) {

@@ -47,7 +47,7 @@ json_t *put_api_content_request(struct mg_str s) {
 }
 
 void api_content_view(struct mg_connection *c, struct mg_http_message *hm,
-                      sqlite3 *db) {
+                      SommelierDBMS *db) {
     char *method = request_method(hm);
 
     if (DEBUG) {

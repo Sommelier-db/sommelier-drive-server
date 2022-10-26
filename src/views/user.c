@@ -35,7 +35,7 @@ json_t *post_api_user_request(struct mg_str s) {
 
 // GET, POST /api/user
 void api_user_view(struct mg_connection *c, struct mg_http_message *hm,
-                   sqlite3 *db) {
+                   SommelierDBMS *db) {
     char *method = request_method(hm);
 
     if (DEBUG) {

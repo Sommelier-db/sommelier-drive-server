@@ -34,7 +34,7 @@ json_t *post_api_write_permission_request(struct mg_str s) {
 }
 
 void api_write_permission_view(struct mg_connection *c,
-                               struct mg_http_message *hm, sqlite3 *db) {
+                               struct mg_http_message *hm, SommelierDBMS *db) {
     char *method = request_method(hm);
 
     if (DEBUG) {

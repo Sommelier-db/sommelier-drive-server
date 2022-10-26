@@ -1,7 +1,7 @@
 #pragma once
 
+#include "dbms.h"
 #include "entity.h"
-#include "sommelier-db.h"
 
 #define SOMMELIER_DRIVE_N_TABLES 5
 #define SOMMELIER_DRIVE_INITIALIZE_SQL 7
@@ -27,43 +27,43 @@
 #define MAX_SIZE_SQL_SEARCH_ENCRYPTED_PATH \
     MAX_SIZE_SQL_PLANE_TEXT + MAX_SIZE_TRAPDOOR
 
-void InitalizeDatabase(sqlite3 *);
+void InitalizeDatabase(SommelierDBMS *);
 
-User *CreateUser(sqlite3 *, char *, char *);
+User *CreateUser(SommelierDBMS *, char *, char *);
 
-User *ReadUser(sqlite3 *, uint64_t);
+User *ReadUser(SommelierDBMS *, uint64_t);
 
-void IncrementUserNonce(sqlite3 *, User *);
+void IncrementUserNonce(SommelierDBMS *, User *);
 
-Path *CreatePath(sqlite3 *, uint64_t, char *, char *, char *);
+Path *CreatePath(SommelierDBMS *, uint64_t, char *, char *, char *);
 
-Path *ReadPath(sqlite3 *, uint64_t);
+Path *ReadPath(SommelierDBMS *, uint64_t);
 
-PathVector *FilterByPermissionHash(sqlite3 *, char *);
+PathVector *FilterByPermissionHash(SommelierDBMS *, char *);
 
 // depends on Sommelier-DB
-PathVector *SearchEncryptedPath(sqlite3 *, uint64_t, char *);
+PathVector *SearchEncryptedPath(SommelierDBMS *, uint64_t, char *);
 
-SharedKey *CreateSharedKey(sqlite3 *, uint64_t, char *);
+SharedKey *CreateSharedKey(SommelierDBMS *, uint64_t, char *);
 
-SharedKey *ReadSharedKey(sqlite3 *, uint64_t);
+SharedKey *ReadSharedKey(SommelierDBMS *, uint64_t);
 
-AuthorizationSeed *CreateAuthorizationSeed(sqlite3 *, uint64_t, char *);
+AuthorizationSeed *CreateAuthorizationSeed(SommelierDBMS *, uint64_t, char *);
 
-AuthorizationSeed *ReadAuthorizationSeed(sqlite3 *, uint64_t);
+AuthorizationSeed *ReadAuthorizationSeed(SommelierDBMS *, uint64_t);
 
-Content *CreateContent(sqlite3 *, char *, char *, char *);
+Content *CreateContent(SommelierDBMS *, char *, char *, char *);
 
-Content *ReadContent(sqlite3 *, uint64_t);
+Content *ReadContent(SommelierDBMS *, uint64_t);
 
-Content *ReadContentBySharedKeyHash(sqlite3 *, char *);
+Content *ReadContentBySharedKeyHash(SommelierDBMS *, char *);
 
-void UpdateContent(sqlite3 *, Content *);
+void UpdateContent(SommelierDBMS *, Content *);
 
-void IncrementContentNonce(sqlite3 *, Content *);
+void IncrementContentNonce(SommelierDBMS *, Content *);
 
-ContentVector *FilterBySharedKeyHash(sqlite3 *, char *);
+ContentVector *FilterBySharedKeyHash(SommelierDBMS *, char *);
 
-WritePermission *CreateWritePermission(sqlite3 *, uint64_t, uint64_t);
+WritePermission *CreateWritePermission(SommelierDBMS *, uint64_t, uint64_t);
 
-WritePermission *ReadWritePermission(sqlite3 *, uint64_t);
+WritePermission *ReadWritePermission(SommelierDBMS *, uint64_t);

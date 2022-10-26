@@ -1,14 +1,14 @@
 #pragma once
 
+#include "dbms.h"
 #include "mongoose.h"
-#include "sommelier-db.h"
 #include "util.h"
 
 #define ROUTER_DEFAULT_ROUTES 16
 #define ROUTES_EXTEND_RATE 2
 
 typedef void (*Route)(struct mg_connection *, struct mg_http_message *,
-                      struct sqlite3 *);
+                      SommelierDBMS *);
 
 typedef struct router {
     size_t max_size;

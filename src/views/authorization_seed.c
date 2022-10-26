@@ -31,7 +31,8 @@ json_t *post_api_authorization_seed_request(struct mg_str s) {
 }
 
 void api_authorization_seed_view(struct mg_connection *c,
-                                 struct mg_http_message *hm, sqlite3 *db) {
+                                 struct mg_http_message *hm,
+                                 SommelierDBMS *db) {
     char *method = request_method(hm);
 
     if (DEBUG) {
