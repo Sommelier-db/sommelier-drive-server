@@ -38,7 +38,16 @@ json_t *post_api_path_request(struct mg_str s) {
 // GET, POST /api/file-path
 void api_path_view(struct mg_connection *c, struct mg_http_message *hm,
                    sqlite3 *db) {
-    char *method = request_method(hm->method);
+    char *method = request_method(hm);
+
+    if (DEBUG) {
+        char *uri = request_uri(hm);
+
+        char msg[100] = "";
+        sprintf(msg, "HTTP Request: %s %s", method, uri);
+        logging_debug(msg);
+        free(uri);
+    }
 
     if (strcmp(method, "GET") == 0) {
         json_t *body = get_api_path_request(hm->body);
@@ -115,7 +124,16 @@ json_t *get_api_path_children_request(struct mg_str s) {
 // GET /api/file-path/children
 void api_path_children_view(struct mg_connection *c, struct mg_http_message *hm,
                             sqlite3 *db) {
-    char *method = request_method(hm->method);
+    char *method = request_method(hm);
+
+    if (DEBUG) {
+        char *uri = request_uri(hm);
+
+        char msg[100] = "";
+        sprintf(msg, "HTTP Request: %s %s", method, uri);
+        logging_debug(msg);
+        free(uri);
+    }
 
     if (strcmp(method, "GET") == 0) {
         json_t *body = get_api_path_children_request(hm->body);
@@ -161,7 +179,16 @@ json_t *get_api_path_search_request(struct mg_str s) {
 
 void api_path_search_view(struct mg_connection *c, struct mg_http_message *hm,
                           sqlite3 *db) {
-    char *method = request_method(hm->method);
+    char *method = request_method(hm);
+
+    if (DEBUG) {
+        char *uri = request_uri(hm);
+
+        char msg[100] = "";
+        sprintf(msg, "HTTP Request: %s %s", method, uri);
+        logging_debug(msg);
+        free(uri);
+    }
 
     if (strcmp(method, "GET") == 0) {
         json_t *body = get_api_path_search_request(hm->body);
