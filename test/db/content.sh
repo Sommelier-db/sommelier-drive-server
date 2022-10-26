@@ -2,7 +2,7 @@
 
 SRC=test/db/content.c
 BIN=test/build/db_content
-OBJECTS="object/log.o object/util.o object/entity.o object/orm.o"
+OBJECTS="object/log.o object/util.o object/entity.o object/dbms.o object/orm.o"
 C_UTIL_FLAGS="-Wall -O0"
 C_INCLUDE_FLAGS="-I./include -I./sommelier-drive-cryptos -I../sommelier-db-build/install/include"
 C_LINK_FLAGS="-ljansson -L./sommelier-drive-cryptos/target/release -lsommelier_drive_cryptos -L../sommelier-db-build/install/lib -lsommelier-db"

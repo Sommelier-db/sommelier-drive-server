@@ -9,21 +9,15 @@
 int main() {
     printf("test write_permission create and read:\n");
 
-    sqlite3 *db = NULL;
-    int err = sqlite3_open(DBFILE, &db);
-    if (err) {
-        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-        sqlite3_close(db);
-        exit(1);
-    }
+    SommelierDBMS *dbms = initialize_sommelier_dbms();
+    OpenSommelierDB(dbms, DBFILE);
+    InitalizeDatabase(dbms);
 
-    InitalizeDatabase(db);
+    User *u = CreateUser(dbms, "dpk1", "kpk1");
+    Path *p = CreatePath(dbms, u->id, "hogehoge", "ctd1", "ctk1");
 
-    User *u = CreateUser(db, "dpk1", "kpk1");
-    Path *p = CreatePath(db, u->id, "hogehoge", "ctd1", "ctk1");
-
-    WritePermission *wp1 = CreateWritePermission(db, p->id, u->id);
-    WritePermission *wp2 = ReadWritePermission(db, wp1->id);
+    WritePermission *wp1 = CreateWritePermission(dbms, p->id, u->id);
+    WritePermission *wp2 = ReadWritePermission(dbms, wp1->id);
 
     if (DEBUG) {
         debug_write_permission(wp1);
