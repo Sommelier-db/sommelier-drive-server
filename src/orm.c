@@ -1,7 +1,5 @@
 #include "orm.h"
 
-// TODO: execのerror-handling.
-
 uint64_t __last_inserted_id(sqlite3 *db) {
     return (uint64_t)sqlite3_last_insert_rowid(db);
 }
@@ -151,6 +149,18 @@ Path *CreatePath(SommelierDBMS *dbms, uint64_t uid, char *ph, char *ctd,
     }
 }
 
+static int callback_set_path(void *path, int argc, char **argv,
+                             char **azColName) {
+    set_path((Path *)path, AS_U64(argv[0]), AS_U64(argv[1]), argv[2], argv[3],
+             argv[4]);
+
+    if (DEBUG) {
+        debug_path((Path *)path);
+    }
+
+    return 0;
+}
+
 Path *ReadPath(SommelierDBMS *dbms, uint64_t id) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
@@ -158,43 +168,17 @@ Path *ReadPath(SommelierDBMS *dbms, uint64_t id) {
             "KeywordCipherText FROM path_table WHERE PathID = %ld;",
             id);
 
-    if (DEBUG) {
-        printf("  sql - %s\n", sql);
-    }
-
-    sqlite3_stmt *stmt = NULL;
-    int rc = sqlite3_prepare_v2(sommelier_connection(dbms), sql, -1, &stmt, 0);
-    if (rc != SQLITE_OK) {
-        if (DEBUG) {
-            char msg[100] = "";
-            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code = %d)", rc);
-            logging_debug(msg);
-        }
-        return NULL;
-    }
-
     Path *p = initialize_path();
+    set_path_id(p, UINT64_MAX);
+    int rc = orm_execute_sql(sommelier_connection(dbms), sql, callback_set_path,
+                             (void *)p);
 
-    rc = sqlite3_step(stmt);
-    if (rc == SQLITE_ROW) {
-        uint64_t id = (uint64_t)sqlite3_column_int(stmt, 0);
-        uint64_t uid = (uint64_t)sqlite3_column_int(stmt, 1);
-        char *ph = (char *)sqlite3_column_text(stmt, 2);
-        char *ctd = (char *)sqlite3_column_text(stmt, 3);
-        char *ctk = (char *)sqlite3_column_text(stmt, 4);
-
-        set_path(p, id, uid, ph, ctd, ctk);
-        return p;
-    } else {
-        if (DEBUG) {
-            logging_debug("SQLite3: SQL error occured.");
-        }
-
+    if (rc != SQLITE_OK || p->id == UINT64_MAX) {
         finalize_path(p);
-        return NULL;
+        p = NULL;
     }
 
-    return NULL;
+    return p;
 }
 
 static int callback_path_row(void *vec, int argc, char **argv,
@@ -267,6 +251,17 @@ SharedKey *CreateSharedKey(SommelierDBMS *dbms, uint64_t pid, char *ctsk) {
     }
 }
 
+static int callback_set_shared_key(void *sk, int argc, char **argv,
+                                   char **azColName) {
+    set_shared_key((SharedKey *)sk, AS_U64(argv[0]), AS_U64(argv[1]), argv[2]);
+
+    if (DEBUG) {
+        debug_shared_key((SharedKey *)sk);
+    }
+
+    return 0;
+}
+
 SharedKey *ReadSharedKey(SommelierDBMS *dbms, uint64_t pid) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
@@ -274,41 +269,17 @@ SharedKey *ReadSharedKey(SommelierDBMS *dbms, uint64_t pid) {
             "shared_key_table WHERE PathID = %ld;",
             pid);
 
-    if (DEBUG) {
-        printf("  sql - %s\n", sql);
-    }
-
-    sqlite3_stmt *stmt = NULL;
-    int rc = sqlite3_prepare_v2(dbms->db, sql, -1, &stmt, 0);
-    if (rc != SQLITE_OK) {
-        if (DEBUG) {
-            char msg[100] = "";
-            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code = %d)\n", rc);
-            logging_debug(msg);
-        }
-        return NULL;
-    }
-
     SharedKey *sk = initialize_shared_key();
+    set_shared_key_id(sk, UINT64_MAX);
+    int rc = orm_execute_sql(sommelier_connection(dbms), sql,
+                             callback_set_shared_key, (void *)sk);
 
-    rc = sqlite3_step(stmt);
-    if (rc == SQLITE_ROW) {
-        uint64_t id = (uint64_t)sqlite3_column_int(stmt, 0);
-        uint64_t pid = (uint64_t)sqlite3_column_int(stmt, 1);
-        char *ctsk = (char *)sqlite3_column_text(stmt, 2);
-
-        set_shared_key(sk, id, pid, ctsk);
-        return sk;
-    } else {
-        if (DEBUG) {
-            logging_debug("Some error encountered. - sqlite3_step");
-        }
-
+    if (rc != SQLITE_OK || sk->id == UINT64_MAX) {
         finalize_shared_key(sk);
-        return NULL;
+        sk = NULL;
     }
 
-    return NULL;
+    return sk;
 }
 
 AuthorizationSeed *CreateAuthorizationSeed(SommelierDBMS *dbms, uint64_t pid,
@@ -336,6 +307,18 @@ AuthorizationSeed *CreateAuthorizationSeed(SommelierDBMS *dbms, uint64_t pid,
     }
 }
 
+static int callback_set_authorization_seed(void *as, int argc, char **argv,
+                                           char **azColName) {
+    set_authorization_seed((AuthorizationSeed *)as, AS_U64(argv[0]),
+                           AS_U64(argv[1]), argv[2]);
+
+    if (DEBUG) {
+        debug_authorization_seed((AuthorizationSeed *)as);
+    }
+
+    return 0;
+}
+
 AuthorizationSeed *ReadAuthorizationSeed(SommelierDBMS *dbms, uint64_t pid) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
@@ -343,41 +326,17 @@ AuthorizationSeed *ReadAuthorizationSeed(SommelierDBMS *dbms, uint64_t pid) {
             "FROM authorization_seed_table WHERE PathID = %ld;",
             pid);
 
-    if (DEBUG) {
-        printf("  sql - %s\n", sql);
-    }
-
-    sqlite3_stmt *stmt = NULL;
-    int rc = sqlite3_prepare_v2(sommelier_connection(dbms), sql, -1, &stmt, 0);
-    if (rc != SQLITE_OK) {
-        if (DEBUG) {
-            char msg[100] = "";
-            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code = %d)\n", rc);
-            logging_debug(msg);
-        }
-        return NULL;
-    }
-
     AuthorizationSeed *as = initialize_authorization_seed();
+    set_authorization_seed_id(as, UINT64_MAX);
+    int rc = orm_execute_sql(sommelier_connection(dbms), sql,
+                             callback_set_authorization_seed, (void *)as);
 
-    rc = sqlite3_step(stmt);
-    if (rc == SQLITE_ROW) {
-        uint64_t id = (uint64_t)sqlite3_column_int(stmt, 0);
-        uint64_t pid = (uint64_t)sqlite3_column_int(stmt, 1);
-        char *ctas = (char *)sqlite3_column_text(stmt, 2);
-
-        set_authorization_seed(as, id, pid, ctas);
-        return as;
-    } else {
-        if (DEBUG) {
-            logging_debug("SQLite3: SQL error occured.");
-        }
-
+    if (rc != SQLITE_OK || as->id == UINT64_MAX) {
         finalize_authorization_seed(as);
-        return NULL;
+        as = NULL;
     }
 
-    return NULL;
+    return as;
 }
 
 Content *CreateContent(SommelierDBMS *dbms, char *skh, char *pka, char *ctc) {
@@ -404,6 +363,18 @@ Content *CreateContent(SommelierDBMS *dbms, char *skh, char *pka, char *ctc) {
     }
 }
 
+static int callback_set_content(void *c, int argc, char **argv,
+                                char **azColName) {
+    set_content((Content *)c, AS_U64(argv[0]), argv[1], argv[2],
+                AS_U64(argv[3]), argv[4]);
+
+    if (DEBUG) {
+        debug_content((Content *)c);
+    }
+
+    return 0;
+}
+
 Content *ReadContent(SommelierDBMS *dbms, uint64_t id) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
@@ -411,41 +382,17 @@ Content *ReadContent(SommelierDBMS *dbms, uint64_t id) {
             "ContentCipherText FROM content_table WHERE ContentID = %ld;",
             id);
 
-    if (DEBUG) {
-        printf("  sql - %s\n", sql);
-    }
-
-    sqlite3_stmt *stmt = NULL;
-    int rc = sqlite3_prepare_v2(sommelier_connection(dbms), sql, -1, &stmt, 0);
-    if (rc != SQLITE_OK) {
-        if (DEBUG) {
-            char msg[100] = "";
-            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code = %d)\n", rc);
-            logging_debug(msg);
-        }
-        return NULL;
-    }
-
     Content *c = initialize_content();
+    set_content_id(c, UINT64_MAX);
+    int rc = orm_execute_sql(sommelier_connection(dbms), sql,
+                             callback_set_content, (void *)c);
 
-    rc = sqlite3_step(stmt);
-    if (rc == SQLITE_ROW) {
-        uint64_t id = (uint64_t)sqlite3_column_int(stmt, 0);
-        char *skh = (char *)sqlite3_column_text(stmt, 1);
-        char *pka = (char *)sqlite3_column_text(stmt, 2);
-        uint64_t nonce = (uint64_t)sqlite3_column_int(stmt, 3);
-        char *ctc = (char *)sqlite3_column_text(stmt, 4);
-
-        set_content(c, id, skh, pka, nonce, ctc);
-        return c;
-    } else {
-        if (DEBUG) {
-            logging_debug("SQLite3: SQL error occured.");
-        }
-
+    if (rc != SQLITE_OK || c->id == UINT64_MAX) {
         finalize_content(c);
-        return NULL;
+        c = NULL;
     }
+
+    return c;
 }
 
 Content *ReadContentBySharedKeyHash(SommelierDBMS *dbms, char *skh) {
@@ -455,41 +402,17 @@ Content *ReadContentBySharedKeyHash(SommelierDBMS *dbms, char *skh) {
             "ContentCipherText FROM content_table WHERE SharedKeyHash = '%s';",
             skh);
 
-    if (DEBUG) {
-        printf("  sql - %s\n", sql);
-    }
-
-    sqlite3_stmt *stmt = NULL;
-    int rc = sqlite3_prepare_v2(sommelier_connection(dbms), sql, -1, &stmt, 0);
-    if (rc != SQLITE_OK) {
-        if (DEBUG) {
-            char msg[100] = "";
-            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code = %d)\n", rc);
-            logging_debug(msg);
-        }
-        return NULL;
-    }
-
     Content *c = initialize_content();
+    set_content_id(c, UINT64_MAX);
+    int rc = orm_execute_sql(sommelier_connection(dbms), sql,
+                             callback_set_content, (void *)c);
 
-    rc = sqlite3_step(stmt);
-    if (rc == SQLITE_ROW) {
-        uint64_t id = (uint64_t)sqlite3_column_int(stmt, 0);
-        char *skh = (char *)sqlite3_column_text(stmt, 1);
-        char *pka = (char *)sqlite3_column_text(stmt, 2);
-        uint64_t nonce = (uint64_t)sqlite3_column_int(stmt, 3);
-        char *ctc = (char *)sqlite3_column_text(stmt, 4);
-
-        set_content(c, id, skh, pka, nonce, ctc);
-        return c;
-    } else {
-        if (DEBUG) {
-            logging_debug("SQLite3: SQL error occured.");
-        }
-
+    if (rc != SQLITE_OK || c->id == UINT64_MAX) {
         finalize_content(c);
-        return NULL;
+        c = NULL;
     }
+
+    return c;
 }
 
 void UpdateContent(SommelierDBMS *dbms, Content *c) {
@@ -564,6 +487,18 @@ WritePermission *CreateWritePermission(SommelierDBMS *dbms, uint64_t pid,
     }
 }
 
+static int callback_set_write_permission(void *wp, int argc, char **argv,
+                                         char **azColName) {
+    set_write_permission((WritePermission *)wp, AS_U64(argv[0]),
+                         AS_U64(argv[1]), AS_U64(argv[2]));
+
+    if (DEBUG) {
+        debug_write_permission((WritePermission *)wp);
+    }
+
+    return 0;
+}
+
 WritePermission *ReadWritePermission(SommelierDBMS *dbms, uint64_t pid) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
@@ -571,30 +506,14 @@ WritePermission *ReadWritePermission(SommelierDBMS *dbms, uint64_t pid) {
             "write_permission_table WHERE PathID = %ld;",
             pid);
 
-    if (DEBUG) {
-        printf("  sql - %s\n", sql);
-    }
-
-    sqlite3_stmt *stmt = NULL;
-    int return_value =
-        sqlite3_prepare_v2(sommelier_connection(dbms), sql, -1, &stmt, 0);
-    if (return_value) {
-        printf("sqlite3_prepare_v2 is failed. (err_code=%d)\n", return_value);
-        exit(return_value);
-    }
-
     WritePermission *wp = initialize_write_permission();
+    set_write_permission_id(wp, UINT64_MAX);
+    int rc = orm_execute_sql(sommelier_connection(dbms), sql,
+                             callback_set_write_permission, (void *)wp);
 
-    return_value = sqlite3_step(stmt);
-    if (return_value == SQLITE_ROW) {
-        uint64_t id = (uint64_t)sqlite3_column_int(stmt, 0);
-        uint64_t pid = (uint64_t)sqlite3_column_int(stmt, 1);
-        uint64_t uid = (uint64_t)sqlite3_column_int(stmt, 2);
-
-        set_write_permission(wp, id, pid, uid);
-    } else {
-        printf("Some error encountered.\n");
-        exit(1);
+    if (rc != SQLITE_OK || wp->id == UINT64_MAX) {
+        finalize_write_permission(wp);
+        wp = NULL;
     }
 
     return wp;

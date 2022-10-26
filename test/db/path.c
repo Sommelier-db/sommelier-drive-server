@@ -25,7 +25,7 @@ int main() {
         debug_path(p2);
     }
 
-    for (int i = 0; i < 200; i++) {
+    for (int i = 0; i < 16; i++) {
         Path *p = CreatePath(dbms, u->id, "ph", "ctd", "ctk");
         finalize_path(p);
     }
