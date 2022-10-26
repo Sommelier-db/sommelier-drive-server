@@ -55,7 +55,7 @@ void api_content_view(struct mg_connection *c, struct mg_http_message *hm,
 
         if (body != NULL) {
             char *skh = (char *)json_string_value(
-                json_object_get(body, "sharedKeyhash"));
+                json_object_get(body, "sharedKeyHash"));
             Content *con = ReadContentBySharedKeyHash(db, skh);
 
             if (con != NULL) {
