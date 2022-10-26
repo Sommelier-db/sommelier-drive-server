@@ -5,7 +5,7 @@ char *alloc_string(size_t size) {
 
     if (p == NULL) {
         char msg[128] = "";
-        sprintf(msg, "Memory allocation is failed. - allo_string(size=%ld)",
+        sprintf(msg, "Memory allocation is failed. - alloc_string(size=%ld)",
                 size);
         logging_error(msg);
 

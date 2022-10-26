@@ -1,24 +1,36 @@
 #include "orm.h"
 
+#define MAX_SIZE_LOGGING_SQL_TEXT 256
+
 // TODO: execのerror-handling.
 
-void __exec_simple_sql(sqlite3 *db, const char *sql, sqlite3_callback cb,
-                       void *obj) {
+int __exec_simple_sql(sqlite3 *db, const char *sql, sqlite3_callback cb,
+                      void *obj) {
     if (DEBUG) {
-        printf("  sql - %s\n", sql);
+        char _sql[MAX_SIZE_LOGGING_SQL_TEXT] = "";
+        strncpy(_sql, sql, MAX_SIZE_LOGGING_SQL_TEXT - 1);
+        _sql[MAX_SIZE_LOGGING_SQL_TEXT - 1] = '\0';
+
+        char *suffix = strlen(sql) >= MAX_SIZE_LOGGING_SQL_TEXT ? "..." : "";
+
+        char msg[MAX_SIZE_LOGGING_SQL_TEXT + 10] = "";
+        sprintf(msg, "SQL: %s%s", _sql, suffix);
+        logging_debug(msg);
     }
 
     char *zErrMsg = NULL;
     int rc = sqlite3_exec(db, sql, cb, obj, &zErrMsg);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error (%d): %s\n", rc, zErrMsg);
+        char msg[200] = "";
+        sprintf(msg, "SQL error (%d): %s", rc, zErrMsg);
+        logging_error(msg);
         sqlite3_free(zErrMsg);
     }
+
+    return rc;
 }
 
-uint64_t __exec_simple_insert_sql(sqlite3 *db, const char *sql,
-                                  sqlite3_callback cb, void *obj) {
-    __exec_simple_sql(db, sql, cb, obj);
+uint64_t __last_inserted_id(sqlite3 *db) {
     return (uint64_t)sqlite3_last_insert_rowid(db);
 }
 
@@ -83,11 +95,32 @@ User *CreateUser(sqlite3 *db, char *pkd, char *pkk) {
             "values ('%s', '%s', 1);",
             pkd, pkk);
 
-    uint64_t id = __exec_simple_insert_sql(db, sql, 0, 0);
-    User *u = initialize_user();
-    set_user(u, id, pkd, pkk, 1);
+    int rc = __exec_simple_sql(db, sql, 0, 0);
 
-    return u;
+    if (rc == SQLITE_OK) {
+        uint64_t id = __last_inserted_id(db);
+        User *u = initialize_user();
+        set_user(u, id, pkd, pkk, 1);
+
+        if (DEBUG) {
+            debug_user(u);
+        }
+
+        return u;
+    } else {
+        return NULL;
+    }
+}
+
+static int callback_set_user(void *user, int argc, char **argv,
+                             char **azColName) {
+    set_user((User *)user, AS_U64(argv[0]), argv[1], argv[2], AS_U64(argv[3]));
+
+    if (DEBUG) {
+        debug_user((User *)user);
+    }
+
+    return 0;
 }
 
 User *ReadUser(sqlite3 *db, uint64_t id) {
@@ -97,42 +130,15 @@ User *ReadUser(sqlite3 *db, uint64_t id) {
             "user_table WHERE UserID = %ld;",
             id);
 
-    if (DEBUG) {
-        printf("  sql - %s\n", sql);
-    }
+    User *user = initialize_user();
+    int rc = __exec_simple_sql(db, sql, callback_set_user, (void *)user);
 
-    sqlite3_stmt *stmt = NULL;
-    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
     if (rc != SQLITE_OK) {
-        if (DEBUG) {
-            char msg[100] = "";
-            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code = %d)", rc);
-            logging_debug(msg);
-        }
-        return NULL;
+        finalize_user(user);
+        user = NULL;
     }
 
-    User *u = initialize_user();
-
-    rc = sqlite3_step(stmt);
-    if (rc == SQLITE_ROW) {
-        uint64_t id = (uint64_t)sqlite3_column_int(stmt, 0);
-        char *pkd = (char *)sqlite3_column_text(stmt, 1);
-        char *pkk = (char *)sqlite3_column_text(stmt, 2);
-        uint64_t nonce = (uint64_t)sqlite3_column_int(stmt, 3);
-
-        set_user(u, id, pkd, pkk, nonce);
-        return u;
-    } else {
-        if (DEBUG) {
-            logging_debug("SQLite3: SQL error occured.");
-        }
-
-        finalize_user(u);
-        return NULL;
-    }
-
-    return NULL;
+    return user;
 }
 
 void IncrementUserNonce(sqlite3 *db, User *u) {
@@ -152,7 +158,8 @@ Path *CreatePath(sqlite3 *db, uint64_t uid, char *ph, char *ctd, char *ctk) {
             "KeywordCipherText) values (%ld, '%s', '%s', '%s');",
             uid, ph, ctd, ctk);
 
-    uint64_t id = __exec_simple_insert_sql(db, sql, 0, 0);
+    // uint64_t id = __exec_simple_insert_sql(db, sql, 0, 0);
+    uint64_t id = __last_inserted_id(db);
     Path *p = initialize_path();
     set_path(p, id, uid, ph, ctd, ctk);
 
@@ -255,7 +262,7 @@ SharedKey *CreateSharedKey(sqlite3 *db, uint64_t pid, char *ctsk) {
             "(%ld, '%s')",
             pid, ctsk);
 
-    uint64_t id = __exec_simple_insert_sql(db, sql, 0, 0);
+    uint64_t id = __last_inserted_id(db);
     SharedKey *sk = initialize_shared_key();
     set_shared_key(sk, id, pid, ctsk);
 
@@ -314,7 +321,7 @@ AuthorizationSeed *CreateAuthorizationSeed(sqlite3 *db, uint64_t pid,
             "AuthorizationSeedCipherText) values (%ld, '%s');",
             pid, ctas);
 
-    uint64_t id = __exec_simple_insert_sql(db, sql, 0, 0);
+    uint64_t id = __last_inserted_id(db);
     AuthorizationSeed *as = initialize_authorization_seed();
     set_authorization_seed(as, id, pid, ctas);
 
@@ -372,7 +379,7 @@ Content *CreateContent(sqlite3 *db, char *skh, char *pka, char *ctc) {
             "Nonce, ContentCipherText) values ('%s', '%s', 1, '%s');",
             skh, pka, ctc);
 
-    uint64_t id = __exec_simple_insert_sql(db, sql, 0, 0);
+    uint64_t id = __last_inserted_id(db);
     Content *c = initialize_content();
     set_content(c, id, skh, pka, 1, ctc);
 
@@ -521,7 +528,7 @@ WritePermission *CreateWritePermission(sqlite3 *db, uint64_t pid,
             "values (%ld, %ld);",
             pid, uid);
 
-    uint64_t id = __exec_simple_insert_sql(db, sql, 0, 0);
+    uint64_t id = __last_inserted_id(db);
     WritePermission *wp = initialize_write_permission();
     set_write_permission(wp, id, pid, uid);
 
