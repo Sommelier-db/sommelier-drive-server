@@ -211,12 +211,15 @@ Path *ReadPath(sqlite3 *db, uint64_t id) {
     return NULL;
 }
 
-static int callback_search_encrypted_path(void *vec, int argc, char **argv,
-                                          char **azColName) {
+static int callback_search_path(void *vec, int argc, char **argv,
+                                char **azColName) {
     if (DEBUG) {
         printf("    select - id: %s, uid: %s, ph: %s, ctd: %s, ctk: %s\n",
                argv[0], argv[1], argv[2], argv[3], argv[4]);
     }
+
+    Path p = {AS_U64(argv[0]), AS_U64(argv[1]), argv[2], argv[3], argv[4]};
+    push_path_vector((PathVector *)vec, &p);
 
     return 0;
 }
@@ -237,8 +240,7 @@ PathVector *SearchEncryptedPath(sqlite3 *db, uint64_t uid, char *trapdoor) {
     PathVector *vec = initialize_path_vector();
 
     char *zErrMsg = 0;
-    int rc = sqlite3_exec(db, sql, callback_search_encrypted_path, (void *)vec,
-                          &zErrMsg);
+    int rc = sqlite3_exec(db, sql, callback_search_path, (void *)vec, &zErrMsg);
 
     if (rc != SQLITE_OK) {
         fprintf(stderr, "SQL error: %s\n", zErrMsg);
@@ -246,23 +248,6 @@ PathVector *SearchEncryptedPath(sqlite3 *db, uint64_t uid, char *trapdoor) {
     }
 
     return vec;
-}
-
-static int callback_filter_path_by_permission_hash(void *vec, int argc,
-                                                   char **argv,
-                                                   char **azColName) {
-    if (DEBUG) {
-        printf("    select - id: %s, uid: %s, ph: %s, ctd: %s, ctk: %s\n",
-               argv[0], argv[1], argv[2], argv[3], argv[4]);
-    }
-
-    // Path *p = initialize_path();
-    // set_path(p, AS_U64(argv[0]), AS_U64(argv[1]), argv[2], argv[3], argv[4]);
-    Path p = {AS_U64(argv[0]), AS_U64(argv[1]), argv[2], argv[3], argv[4]};
-    push_path_vector((PathVector *)vec, &p);
-    // finalize_path(p);
-
-    return 0;
 }
 
 PathVector *FilterByPermissionHash(sqlite3 *db, char *ph) {
@@ -278,8 +263,7 @@ PathVector *FilterByPermissionHash(sqlite3 *db, char *ph) {
 
     PathVector *vec = initialize_path_vector();
     char *zErrMsg = 0;
-    int rc = sqlite3_exec(db, sql, callback_filter_path_by_permission_hash,
-                          (void *)vec, &zErrMsg);
+    int rc = sqlite3_exec(db, sql, callback_search_path, (void *)vec, &zErrMsg);
 
     if (rc != SQLITE_OK) {
         fprintf(stderr, "SQL error: %s\n", zErrMsg);
