@@ -1,6 +1,6 @@
 [submodule "sommelier-drive-cryptos"]
 	path = sommelier-drive-cryptos
-	url = git@github.com:Sommelier-db/sommelier-drive-cryptos.git
+	url = https://github.com/Sommelier-db/sommelier-drive-cryptos.git
 [submodule "sommelier-db"]
 	path = sommelier-db
-	url = git@github.com:doss-eeic/2022-01-sqlite.git
+	url = https://github.com/doss-eeic/2022-01-sqlite.git
