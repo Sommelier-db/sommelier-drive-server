@@ -26,7 +26,7 @@ int main() {
     User *u2 = ReadUser(db, u1->id);
 
     if (DEBUG) {
-        printf("\n");
+        logging_debug("show u1 and u2");
         logging_debug("u1:");
         debug_user(u1);
         logging_debug("u2:");
@@ -41,7 +41,7 @@ int main() {
     User *u3 = ReadUser(db, u1->id);
 
     if (DEBUG) {
-        printf("\n");
+        logging_debug("show u1, u2 and u3");
         logging_debug("u1:");
         debug_user(u1);
         logging_debug("u2:");
@@ -49,6 +49,16 @@ int main() {
         logging_debug("u3:");
         debug_user(u3);
     }
+
+    printf("4. read user (id = %ld) must be failed.\n", u1->id + 100);
+    User *u4 = ReadUser(db, u1->id + 100);
+    logging_debug(u4 == NULL ? "u4 is NULL (test success)"
+                             : "u4 is not NULL (test fail)");
+
+    printf("5. create user with invalid text must be failed.\n");
+    User *u5 = CreateUser(db, "'hoge'", "'fuga'");
+    logging_debug(u5 == NULL ? "u5 is NULL (test success)"
+                             : "u5 is not NULL (test fail)");
 
     return 0;
 }

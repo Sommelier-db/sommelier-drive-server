@@ -131,9 +131,11 @@ User *ReadUser(sqlite3 *db, uint64_t id) {
             id);
 
     User *user = initialize_user();
+    // for error-handling, set `id = MAX` if no row get by execute SELECT.
+    set_user_id(user, UINT64_MAX);
     int rc = __exec_simple_sql(db, sql, callback_set_user, (void *)user);
 
-    if (rc != SQLITE_OK) {
+    if (rc != SQLITE_OK || user->id == UINT64_MAX) {
         finalize_user(user);
         user = NULL;
     }
