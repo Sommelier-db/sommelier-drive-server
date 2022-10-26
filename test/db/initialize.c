@@ -7,15 +7,12 @@
 #define DBFILE "data/_test_db_initialize.db"
 
 int main() {
-    sqlite3 *db = NULL;
-    int err = sqlite3_open(DBFILE, &db);
-    if (err) {
-        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-        sqlite3_close(db);
-        exit(1);
-    }
+    SommelierDBMS *dbms = initialize_sommelier_dbms();
+    OpenSommelierDB(dbms, DBFILE);
 
-    InitalizeDatabase(db);
+    InitalizeDatabase(dbms);
+
+    logging_debug("success: test_db_initialize");
 
     return 0;
 }

@@ -5,7 +5,7 @@
 
 #define MAX_SIZE_TRANSACTION_NAME 32
 #define COMMIT_TRANSACTION_PER_INSERT 10
-#define MAX_SIZE_LOGGING_SQL_TEXT 256
+#define MAX_SIZE_LOGGING_SQL_TEXT 160
 
 typedef struct sommelier_db {
     int insert_count;
