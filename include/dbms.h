@@ -19,4 +19,4 @@ int OpenSommelierDB(SommelierDBMS *, const char *);
 char *current_transaction_name(SommelierDBMS *);
 sqlite3 *sommelier_connection(SommelierDBMS *);
 sqlite3 *sommelier_connection_with_insert(SommelierDBMS *);
-int orm_execute_sql(SommelierDBMS *, const char *sql, sqlite3_callback, void *);
+int orm_execute_sql(sqlite3 *, const char *sql, sqlite3_callback, void *);

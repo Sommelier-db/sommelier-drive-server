@@ -1,40 +1,12 @@
 #include "orm.h"
 
-#define MAX_SIZE_LOGGING_SQL_TEXT 256
-
 // TODO: execのerror-handling.
-
-int __exec_simple_sql(sqlite3 *db, const char *sql, sqlite3_callback cb,
-                      void *obj) {
-    if (DEBUG) {
-        char _sql[MAX_SIZE_LOGGING_SQL_TEXT] = "";
-        strncpy(_sql, sql, MAX_SIZE_LOGGING_SQL_TEXT - 1);
-        _sql[MAX_SIZE_LOGGING_SQL_TEXT - 1] = '\0';
-
-        char *suffix = strlen(sql) >= MAX_SIZE_LOGGING_SQL_TEXT ? "..." : "";
-
-        char msg[MAX_SIZE_LOGGING_SQL_TEXT + 10] = "";
-        sprintf(msg, "SQL: %s%s", _sql, suffix);
-        logging_debug(msg);
-    }
-
-    char *zErrMsg = NULL;
-    int rc = sqlite3_exec(db, sql, cb, obj, &zErrMsg);
-    if (rc != SQLITE_OK) {
-        char msg[200] = "";
-        sprintf(msg, "SQL error (%d): %s", rc, zErrMsg);
-        logging_error(msg);
-        sqlite3_free(zErrMsg);
-    }
-
-    return rc;
-}
 
 uint64_t __last_inserted_id(sqlite3 *db) {
     return (uint64_t)sqlite3_last_insert_rowid(db);
 }
 
-void InitalizeDatabase(sqlite3 *db) {
+void InitalizeDatabase(SommelierDBMS *dbms) {
     // TODO: already exists対策
 
     const char sql[SOMMELIER_DRIVE_INITIALIZE_SQL][MAX_SIZE_SQL_PLANE_TEXT] = {
@@ -82,23 +54,23 @@ void InitalizeDatabase(sqlite3 *db) {
     };
 
     for (int i = 0; i < SOMMELIER_DRIVE_INITIALIZE_SQL; i++) {
-        __exec_simple_sql(db, sql[i], 0, 0);
+        orm_execute_sql(sommelier_connection(dbms), sql[i], 0, 0);
     }
 }
 
 // Create User API.
 
-User *CreateUser(sqlite3 *db, char *pkd, char *pkk) {
+User *CreateUser(SommelierDBMS *dbms, char *pkd, char *pkk) {
     char sql[MAX_SIZE_SQL_CREATE_USER] = "";
     sprintf(sql,
             "INSERT INTO user_table (DataPublicKey, KeywordPublicKey, Nonce) "
             "values ('%s', '%s', 1);",
             pkd, pkk);
 
-    int rc = __exec_simple_sql(db, sql, 0, 0);
+    int rc = orm_execute_sql(sommelier_connection_with_insert(dbms), sql, 0, 0);
 
     if (rc == SQLITE_OK) {
-        uint64_t id = __last_inserted_id(db);
+        uint64_t id = __last_inserted_id(dbms->db);
         User *u = initialize_user();
         set_user(u, id, pkd, pkk, 1);
 
@@ -123,7 +95,7 @@ static int callback_set_user(void *user, int argc, char **argv,
     return 0;
 }
 
-User *ReadUser(sqlite3 *db, uint64_t id) {
+User *ReadUser(SommelierDBMS *dbms, uint64_t id) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
             "SELECT UserID, DataPublicKey, KeywordPublicKey, Nonce FROM "
@@ -133,7 +105,8 @@ User *ReadUser(sqlite3 *db, uint64_t id) {
     User *user = initialize_user();
     // for error-handling, set `id = MAX` if no row get by execute SELECT.
     set_user_id(user, UINT64_MAX);
-    int rc = __exec_simple_sql(db, sql, callback_set_user, (void *)user);
+    int rc = orm_execute_sql(sommelier_connection(dbms), sql, callback_set_user,
+                             (void *)user);
 
     if (rc != SQLITE_OK || user->id == UINT64_MAX) {
         finalize_user(user);
@@ -143,32 +116,42 @@ User *ReadUser(sqlite3 *db, uint64_t id) {
     return user;
 }
 
-void IncrementUserNonce(sqlite3 *db, User *u) {
+void IncrementUserNonce(SommelierDBMS *dbms, User *u) {
     uint64_t n = increment_user_nonce(u);
     char sql[MAX_SIZE_SQL_PLANE_TEXT] = "";
     sprintf(sql, "UPDATE user_table SET Nonce=%ld WHERE UserID=%ld;", n, u->id);
 
-    __exec_simple_sql(db, sql, 0, 0);
+    orm_execute_sql(sommelier_connection(dbms), sql, 0, 0);
 }
 
 // Create Path API.
 
-Path *CreatePath(sqlite3 *db, uint64_t uid, char *ph, char *ctd, char *ctk) {
+Path *CreatePath(SommelierDBMS *dbms, uint64_t uid, char *ph, char *ctd,
+                 char *ctk) {
     char sql[MAX_SIZE_SQL_CREATE_PATH] = "";
     sprintf(sql,
             "INSERT INTO path_table (UserID, PermissionHash, DataCipherText, "
             "KeywordCipherText) values (%ld, '%s', '%s', '%s');",
             uid, ph, ctd, ctk);
 
-    // uint64_t id = __exec_simple_insert_sql(db, sql, 0, 0);
-    uint64_t id = __last_inserted_id(db);
-    Path *p = initialize_path();
-    set_path(p, id, uid, ph, ctd, ctk);
+    int rc = orm_execute_sql(sommelier_connection_with_insert(dbms), sql, 0, 0);
 
-    return p;
+    if (rc == SQLITE_OK) {
+        uint64_t id = __last_inserted_id(dbms->db);
+        Path *p = initialize_path();
+        set_path(p, id, uid, ph, ctd, ctk);
+
+        if (DEBUG) {
+            debug_path(p);
+        }
+
+        return p;
+    } else {
+        return NULL;
+    }
 }
 
-Path *ReadPath(sqlite3 *db, uint64_t id) {
+Path *ReadPath(SommelierDBMS *dbms, uint64_t id) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
             "SELECT PathID, UserID, PermissionHash, DataCipherText, "
@@ -180,7 +163,7 @@ Path *ReadPath(sqlite3 *db, uint64_t id) {
     }
 
     sqlite3_stmt *stmt = NULL;
-    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    int rc = sqlite3_prepare_v2(sommelier_connection(dbms), sql, -1, &stmt, 0);
     if (rc != SQLITE_OK) {
         if (DEBUG) {
             char msg[100] = "";
@@ -228,7 +211,8 @@ static int callback_path_row(void *vec, int argc, char **argv,
 }
 
 // depends on Sommelier-DB
-PathVector *SearchEncryptedPath(sqlite3 *db, uint64_t uid, char *trapdoor) {
+PathVector *SearchEncryptedPath(SommelierDBMS *dbms, uint64_t uid,
+                                char *trapdoor) {
     char sql[MAX_SIZE_SQL_SEARCH_ENCRYPTED_PATH] = "";
     sprintf(sql,
             "SELECT PathID, UserID, PermissionHash, DataCipherText, "
@@ -238,12 +222,13 @@ PathVector *SearchEncryptedPath(sqlite3 *db, uint64_t uid, char *trapdoor) {
 
     PathVector *vec = initialize_path_vector();
 
-    __exec_simple_sql(db, sql, callback_path_row, (void *)vec);
+    orm_execute_sql(sommelier_connection(dbms), sql, callback_path_row,
+                    (void *)vec);
 
     return vec;
 }
 
-PathVector *FilterByPermissionHash(sqlite3 *db, char *ph) {
+PathVector *FilterByPermissionHash(SommelierDBMS *dbms, char *ph) {
     char sql[MAX_SIZE_SQL_FILTER_BY_PREMISSION_HASH] = "";
     sprintf(sql,
             "SELECT PathID, UserID, PermissionHash, DataCipherText, "
@@ -252,26 +237,37 @@ PathVector *FilterByPermissionHash(sqlite3 *db, char *ph) {
 
     PathVector *vec = initialize_path_vector();
 
-    __exec_simple_sql(db, sql, callback_path_row, (void *)vec);
+    orm_execute_sql(sommelier_connection(dbms), sql, callback_path_row,
+                    (void *)vec);
 
     return vec;
 }
 
-SharedKey *CreateSharedKey(sqlite3 *db, uint64_t pid, char *ctsk) {
+SharedKey *CreateSharedKey(SommelierDBMS *dbms, uint64_t pid, char *ctsk) {
     char sql[MAX_SIZE_SQL_CREATE_SHARED_KEY] = "";
     sprintf(sql,
             "INSERT INTO shared_key_table (PathID, SharedKeyCipherText) values "
             "(%ld, '%s')",
             pid, ctsk);
 
-    uint64_t id = __last_inserted_id(db);
-    SharedKey *sk = initialize_shared_key();
-    set_shared_key(sk, id, pid, ctsk);
+    int rc = orm_execute_sql(sommelier_connection_with_insert(dbms), sql, 0, 0);
 
-    return sk;
+    if (rc == SQLITE_OK) {
+        uint64_t id = __last_inserted_id(dbms->db);
+        SharedKey *sk = initialize_shared_key();
+        set_shared_key(sk, id, pid, ctsk);
+
+        if (DEBUG) {
+            debug_shared_key(sk);
+        }
+
+        return sk;
+    } else {
+        return NULL;
+    }
 }
 
-SharedKey *ReadSharedKey(sqlite3 *db, uint64_t pid) {
+SharedKey *ReadSharedKey(SommelierDBMS *dbms, uint64_t pid) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
             "SELECT SharedKeyID, PathID, SharedKeyCipherText FROM "
@@ -283,7 +279,7 @@ SharedKey *ReadSharedKey(sqlite3 *db, uint64_t pid) {
     }
 
     sqlite3_stmt *stmt = NULL;
-    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    int rc = sqlite3_prepare_v2(dbms->db, sql, -1, &stmt, 0);
     if (rc != SQLITE_OK) {
         if (DEBUG) {
             char msg[100] = "";
@@ -315,7 +311,7 @@ SharedKey *ReadSharedKey(sqlite3 *db, uint64_t pid) {
     return NULL;
 }
 
-AuthorizationSeed *CreateAuthorizationSeed(sqlite3 *db, uint64_t pid,
+AuthorizationSeed *CreateAuthorizationSeed(SommelierDBMS *dbms, uint64_t pid,
                                            char *ctas) {
     char sql[MAX_SIZE_SQL_CREATE_AUTHORIZATION_SEED] = "";
     sprintf(sql,
@@ -323,14 +319,24 @@ AuthorizationSeed *CreateAuthorizationSeed(sqlite3 *db, uint64_t pid,
             "AuthorizationSeedCipherText) values (%ld, '%s');",
             pid, ctas);
 
-    uint64_t id = __last_inserted_id(db);
-    AuthorizationSeed *as = initialize_authorization_seed();
-    set_authorization_seed(as, id, pid, ctas);
+    int rc = orm_execute_sql(sommelier_connection_with_insert(dbms), sql, 0, 0);
 
-    return as;
+    if (rc == SQLITE_OK) {
+        uint64_t id = __last_inserted_id(dbms->db);
+        AuthorizationSeed *as = initialize_authorization_seed();
+        set_authorization_seed(as, id, pid, ctas);
+
+        if (DEBUG) {
+            decode_json_authorization_seed(as);
+        }
+
+        return as;
+    } else {
+        return NULL;
+    }
 }
 
-AuthorizationSeed *ReadAuthorizationSeed(sqlite3 *db, uint64_t pid) {
+AuthorizationSeed *ReadAuthorizationSeed(SommelierDBMS *dbms, uint64_t pid) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
             "SELECT AuthorizationSeedID, PathID, AuthorizationSeedCipherText "
@@ -342,7 +348,7 @@ AuthorizationSeed *ReadAuthorizationSeed(sqlite3 *db, uint64_t pid) {
     }
 
     sqlite3_stmt *stmt = NULL;
-    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    int rc = sqlite3_prepare_v2(sommelier_connection(dbms), sql, -1, &stmt, 0);
     if (rc != SQLITE_OK) {
         if (DEBUG) {
             char msg[100] = "";
@@ -374,21 +380,31 @@ AuthorizationSeed *ReadAuthorizationSeed(sqlite3 *db, uint64_t pid) {
     return NULL;
 }
 
-Content *CreateContent(sqlite3 *db, char *skh, char *pka, char *ctc) {
+Content *CreateContent(SommelierDBMS *dbms, char *skh, char *pka, char *ctc) {
     char sql[MAX_SIZE_SQL_CREATE_CONTENT] = "";
     sprintf(sql,
             "INSERT INTO content_table (SharedKeyHash, AuthorizationPublicKey, "
             "Nonce, ContentCipherText) values ('%s', '%s', 1, '%s');",
             skh, pka, ctc);
 
-    uint64_t id = __last_inserted_id(db);
-    Content *c = initialize_content();
-    set_content(c, id, skh, pka, 1, ctc);
+    int rc = orm_execute_sql(sommelier_connection_with_insert(dbms), sql, 0, 0);
 
-    return c;
+    if (rc == SQLITE_OK) {
+        uint64_t id = __last_inserted_id(dbms->db);
+        Content *c = initialize_content();
+        set_content(c, id, skh, pka, 1, ctc);
+
+        if (DEBUG) {
+            decode_json_content(c);
+        }
+
+        return c;
+    } else {
+        return NULL;
+    }
 }
 
-Content *ReadContent(sqlite3 *db, uint64_t id) {
+Content *ReadContent(SommelierDBMS *dbms, uint64_t id) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
             "SELECT ContentID, SharedKeyHash, AuthorizationPublicKey, Nonce, "
@@ -400,7 +416,7 @@ Content *ReadContent(sqlite3 *db, uint64_t id) {
     }
 
     sqlite3_stmt *stmt = NULL;
-    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    int rc = sqlite3_prepare_v2(sommelier_connection(dbms), sql, -1, &stmt, 0);
     if (rc != SQLITE_OK) {
         if (DEBUG) {
             char msg[100] = "";
@@ -432,7 +448,7 @@ Content *ReadContent(sqlite3 *db, uint64_t id) {
     }
 }
 
-Content *ReadContentBySharedKeyHash(sqlite3 *db, char *skh) {
+Content *ReadContentBySharedKeyHash(SommelierDBMS *dbms, char *skh) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
             "SELECT ContentID, SharedKeyHash, AuthorizationPublicKey, Nonce, "
@@ -444,7 +460,7 @@ Content *ReadContentBySharedKeyHash(sqlite3 *db, char *skh) {
     }
 
     sqlite3_stmt *stmt = NULL;
-    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    int rc = sqlite3_prepare_v2(sommelier_connection(dbms), sql, -1, &stmt, 0);
     if (rc != SQLITE_OK) {
         if (DEBUG) {
             char msg[100] = "";
@@ -476,23 +492,23 @@ Content *ReadContentBySharedKeyHash(sqlite3 *db, char *skh) {
     }
 }
 
-void UpdateContent(sqlite3 *db, Content *c) {
+void UpdateContent(SommelierDBMS *dbms, Content *c) {
     char sql[MAX_SIZE_SQL_PLANE_TEXT] = "";
     sprintf(sql,
             "UPDATE content_table SET Nonce=%ld, ContentCipherText='%s' WHERE "
             "ContentID=%ld;",
             c->nonce, c->content_cipher_text, c->id);
 
-    __exec_simple_sql(db, sql, 0, 0);
+    orm_execute_sql(sommelier_connection(dbms), sql, 0, 0);
 }
 
-void IncrementContentNonce(sqlite3 *db, Content *c) {
+void IncrementContentNonce(SommelierDBMS *dbms, Content *c) {
     uint64_t n = increment_content_nonce(c);
     char sql[MAX_SIZE_SQL_PLANE_TEXT] = "";
     sprintf(sql, "UPDATE content_table SET Nonce=%ld WHERE ContentID=%ld;", n,
             c->id);
 
-    __exec_simple_sql(db, sql, 0, 0);
+    orm_execute_sql(sommelier_connection(dbms), sql, 0, 0);
 }
 
 static int callback_content_row(void *vec, int argc, char **argv,
@@ -508,7 +524,7 @@ static int callback_content_row(void *vec, int argc, char **argv,
     return 0;
 }
 
-ContentVector *FilterBySharedKeyHash(sqlite3 *db, char *skh) {
+ContentVector *FilterBySharedKeyHash(SommelierDBMS *dbms, char *skh) {
     char sql[MAX_SIZE_SQL_CREATE_WRITE_PERMISSION] = "";
     sprintf(sql,
             "SELECT ContentID, SharedKeyHash, AuthorizationPublicKey, Nonce,  "
@@ -517,12 +533,13 @@ ContentVector *FilterBySharedKeyHash(sqlite3 *db, char *skh) {
 
     ContentVector *vec = initialize_content_vector();
 
-    __exec_simple_sql(db, sql, callback_content_row, (void *)vec);
+    orm_execute_sql(sommelier_connection(dbms), sql, callback_content_row,
+                    (void *)vec);
 
     return vec;
 }
 
-WritePermission *CreateWritePermission(sqlite3 *db, uint64_t pid,
+WritePermission *CreateWritePermission(SommelierDBMS *dbms, uint64_t pid,
                                        uint64_t uid) {
     char sql[MAX_SIZE_SQL_CREATE_WRITE_PERMISSION] = "";
     sprintf(sql,
@@ -530,14 +547,24 @@ WritePermission *CreateWritePermission(sqlite3 *db, uint64_t pid,
             "values (%ld, %ld);",
             pid, uid);
 
-    uint64_t id = __last_inserted_id(db);
-    WritePermission *wp = initialize_write_permission();
-    set_write_permission(wp, id, pid, uid);
+    int rc = orm_execute_sql(sommelier_connection_with_insert(dbms), sql, 0, 0);
 
-    return wp;
+    if (rc == SQLITE_OK) {
+        uint64_t id = __last_inserted_id(dbms->db);
+        WritePermission *wp = initialize_write_permission();
+        set_write_permission(wp, id, pid, uid);
+
+        if (DEBUG) {
+            decode_json_write_permission(wp);
+        }
+
+        return wp;
+    } else {
+        return NULL;
+    }
 }
 
-WritePermission *ReadWritePermission(sqlite3 *db, uint64_t pid) {
+WritePermission *ReadWritePermission(SommelierDBMS *dbms, uint64_t pid) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
             "SELECT WritePermissionID, PathID, UserID FROM "
@@ -549,7 +576,8 @@ WritePermission *ReadWritePermission(sqlite3 *db, uint64_t pid) {
     }
 
     sqlite3_stmt *stmt = NULL;
-    int return_value = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    int return_value =
+        sqlite3_prepare_v2(sommelier_connection(dbms), sql, -1, &stmt, 0);
     if (return_value) {
         printf("sqlite3_prepare_v2 is failed. (err_code=%d)\n", return_value);
         exit(return_value);

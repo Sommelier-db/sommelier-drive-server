@@ -7,11 +7,11 @@ SommelierDBMS *initialize_sommelier_dbms() {
         dbms->insert_count = 0;
         dbms->filepath = NULL;
         dbms->transaction_name = current_transaction_name(dbms);
-        dbms->db = INITIALIZE(sqlite3 *);
+        dbms->db = NULL;
 
-        if (dbms->db == NULL) {
-            logging_error("SommelierDBMS::db is NULL.");
-        }
+        // if (dbms->db == NULL) {
+        //     logging_error("SommelierDBMS::db is NULL.");
+        // }
     } else {
         logging_error("SommelierDBMS is NULL.");
     }
@@ -22,7 +22,7 @@ SommelierDBMS *initialize_sommelier_dbms() {
 char *current_transaction_name(SommelierDBMS *dbms) {
     char *tr_name = alloc_string(MAX_SIZE_TRANSACTION_NAME);
     sprintf(tr_name, "Transaction%d",
-            dbms->insert_count % COMMIT_TRANSACTION_PER_INSERT);
+            dbms->insert_count / COMMIT_TRANSACTION_PER_INSERT);
     return tr_name;
 }
 
@@ -58,6 +58,8 @@ sqlite3 *sommelier_connection(SommelierDBMS *dbms) {
 }
 
 sqlite3 *sommelier_connection_with_insert(SommelierDBMS *dbms) {
+    sqlite3 *con = sommelier_connection(dbms);
+
     if (dbms->insert_count % COMMIT_TRANSACTION_PER_INSERT == 0) {
         if (DEBUG) {
             char msg[100] = "";
@@ -69,27 +71,26 @@ sqlite3 *sommelier_connection_with_insert(SommelierDBMS *dbms) {
         sprintf(start_tr, "BEGIN TRANSACTION %s;",
                 current_transaction_name(dbms));
 
-        orm_execute_sql(dbms, start_tr, 0, 0);
-    } else if (dbms->insert_count % COMMIT_TRANSACTION_PER_INSERT ==
-               COMMIT_TRANSACTION_PER_INSERT - 1) {
+        orm_execute_sql(con, start_tr, 0, 0);
+    } else if ((dbms->insert_count + 1) % COMMIT_TRANSACTION_PER_INSERT == 0) {
         if (DEBUG) {
             char msg[100] = "";
             sprintf(msg, "current insert count: %d", dbms->insert_count);
             logging_debug(msg);
         }
 
-        char start_tr[64] = "";
-        sprintf(start_tr, "COMMIT TRANSACTION %s;",
+        char commit_tr[64] = "";
+        sprintf(commit_tr, "COMMIT TRANSACTION %s;",
                 current_transaction_name(dbms));
 
-        orm_execute_sql(dbms, start_tr, 0, 0);
+        orm_execute_sql(con, commit_tr, 0, 0);
     }
 
     dbms->insert_count++;
-    return sommelier_connection(dbms);
+    return con;
 }
 
-int orm_execute_sql(SommelierDBMS *dbms, const char *sql, sqlite3_callback cb,
+int orm_execute_sql(sqlite3 *db, const char *sql, sqlite3_callback cb,
                     void *obj) {
     if (DEBUG) {
         char _sql[MAX_SIZE_LOGGING_SQL_TEXT] = "";
@@ -104,7 +105,7 @@ int orm_execute_sql(SommelierDBMS *dbms, const char *sql, sqlite3_callback cb,
     }
 
     char *zErrMsg = NULL;
-    int rc = sqlite3_exec(dbms->db, sql, cb, obj, &zErrMsg);
+    int rc = sqlite3_exec(db, sql, cb, obj, &zErrMsg);
     if (rc != SQLITE_OK) {
         char msg[200] = "";
         sprintf(msg, "SQL error (%d): %s", rc, zErrMsg);
