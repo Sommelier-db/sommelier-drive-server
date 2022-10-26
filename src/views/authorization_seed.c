@@ -47,6 +47,21 @@ void api_authorization_seed_view(struct mg_connection *c,
     if (strcmp(method, "GET") == 0) {
         json_t *body = get_api_authorization_seed_request(hm->body);
 
+        if (DEBUG) {
+            char *dumped = json_dumps(body, 0);
+
+            char _body[160] = "";
+            strncpy(_body, dumped, 160);
+            _body[159] = '\0';
+
+            char msg[180] = "";
+            char *suffix = strlen(dumped) > 160 ? "..." : "";
+            sprintf(msg, "HTTP Body: %s%s", _body, suffix);
+
+            logging_debug(msg);
+            free(dumped);
+        }
+
         if (body != NULL) {
             uint64_t pathId =
                 (uint64_t)json_integer_value(json_object_get(body, "pathId"));
@@ -68,6 +83,21 @@ void api_authorization_seed_view(struct mg_connection *c,
         }
     } else if (strcmp(method, "POST") == 0) {
         json_t *body = post_api_authorization_seed_request(hm->body);
+
+        if (DEBUG) {
+            char *dumped = json_dumps(body, 0);
+
+            char _body[160] = "";
+            strncpy(_body, dumped, 160);
+            _body[159] = '\0';
+
+            char msg[180] = "";
+            char *suffix = strlen(dumped) > 160 ? "..." : "";
+            sprintf(msg, "HTTP Body: %s%s", _body, suffix);
+
+            logging_debug(msg);
+            free(dumped);
+        }
 
         if (body != NULL) {
             uint64_t writeUserId = (uint64_t)json_integer_value(
