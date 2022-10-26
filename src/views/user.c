@@ -103,18 +103,29 @@ void api_user_view(struct mg_connection *c, struct mg_http_message *hm,
             // TODO: NULL check?
             User *u = CreateUser(db, dpk, kpk);
 
-            char *ph = computePermissionHash(u->id, "/");
+            if (u != NULL) {
+                char *ph = computePermissionHash(u->id, "/");
 
-            Path *p = CreatePath(db, u->id, ph, dct, kct);
+                Path *p = CreatePath(db, u->id, ph, dct, kct);
 
-            WritePermission *wp = CreateWritePermission(db, p->id, u->id);
+                if (p != NULL) {
+                    WritePermission *wp =
+                        CreateWritePermission(db, p->id, u->id);
 
-            if (wp != NULL) {
-                mg_http_reply(c, 200, "", "%d", u->id);
+                    if (wp != NULL) {
+                        mg_http_reply(c, 200, "", "%d", u->id);
+
+                        finalize_write_permission(wp);
+                    } else {
+                        __ERROR_REPLY(c);
+                    }
+
+                    finalize_path(p);
+                } else {
+                    __ERROR_REPLY(c);
+                }
 
                 finalize_user(u);
-                finalize_path(p);
-                finalize_write_permission(wp);
             } else {
                 __ERROR_REPLY(c);
             }

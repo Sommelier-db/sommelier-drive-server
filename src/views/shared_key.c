@@ -67,10 +67,13 @@ void api_shared_key_view(struct mg_connection *c, struct mg_http_message *hm,
 
                 free(dumped);
                 free(jsk);
+
                 finalize_shared_key(sk);
             } else {
                 __ERROR_REPLY(c);
             }
+
+            free(body);
         } else {
             __ERROR_REPLY(c);
         }
@@ -90,13 +93,26 @@ void api_shared_key_view(struct mg_connection *c, struct mg_http_message *hm,
 
             // TODO: verify digital signature.
             User *writeUser = ReadUser(db, writeUserId);
-            IncrementUserNonce(db, writeUser);
 
-            SharedKey *sk = CreateSharedKey(db, pathId, ct);
+            if (writeUser != NULL) {
+                IncrementUserNonce(db, writeUser);
 
-            mg_http_reply(c, 200, "", "%d", sk->id);
+                SharedKey *sk = CreateSharedKey(db, pathId, ct);
 
-            finalize_shared_key(sk);
+                if (sk != NULL) {
+                    mg_http_reply(c, 200, "", "%d", sk->id);
+
+                    finalize_shared_key(sk);
+                } else {
+                    __ERROR_REPLY(c);
+                }
+
+                finalize_user(writeUser);
+            } else {
+                __ERROR_REPLY(c);
+            }
+
+            free(body);
         } else {
             __ERROR_REPLY(c);
         }

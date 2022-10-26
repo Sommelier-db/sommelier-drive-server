@@ -66,10 +66,13 @@ void api_write_permission_view(struct mg_connection *c,
 
                 free(dumped);
                 free(jwp);
+
                 finalize_write_permission(wp);
             } else {
                 __ERROR_REPLY(c);
             }
+
+            free(body);
         } else {
             __ERROR_REPLY(c);
         }
@@ -90,13 +93,26 @@ void api_write_permission_view(struct mg_connection *c,
 
             // TODO: verify digital signature.
             User *writeUser = ReadUser(db, writeUserId);
-            IncrementUserNonce(db, writeUser);
 
-            WritePermission *wp = CreateWritePermission(db, pathId, userId);
+            if (writeUser != NULL) {
+                IncrementUserNonce(db, writeUser);
 
-            mg_http_reply(c, 200, "", "%d", wp->id);
+                WritePermission *wp = CreateWritePermission(db, pathId, userId);
 
-            finalize_write_permission(wp);
+                if (wp != NULL) {
+                    mg_http_reply(c, 200, "", "%d", wp->id);
+
+                    finalize_write_permission(wp);
+                } else {
+                    __ERROR_REPLY(c);
+                }
+
+                finalize_user(writeUser);
+            } else {
+                __ERROR_REPLY(c);
+            }
+
+            free(body);
         } else {
             __ERROR_REPLY(c);
         }
