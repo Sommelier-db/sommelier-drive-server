@@ -139,7 +139,6 @@ size_t push_content_vector(ContentVector *, Content *);
 size_t resize_content_vector(ContentVector *);
 json_t *decode_json_content_vector(ContentVector *);
 
-#if DEBUG
 void debug_user(User *);
 void debug_path(Path *);
 void debug_shared_key(SharedKey *);
@@ -148,4 +147,3 @@ void debug_content(Content *);
 void debug_write_permission(WritePermission *);
 void debug_path_vector(PathVector *);
 void debug_content_vector(ContentVector *);
-#endif

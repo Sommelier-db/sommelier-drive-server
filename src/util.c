@@ -25,7 +25,6 @@ char *copy_string(char *dst, const char *src) {
     return ret;
 }
 
-#if DEBUG
 char *alloc_string_debug(size_t size, const char *field) {
     char *p = INITIALIZE_STRING(size);
 
@@ -46,4 +45,3 @@ char *alloc_string_debug(size_t size, const char *field) {
 
     return p;
 }
-#endif

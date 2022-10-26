@@ -11,8 +11,8 @@ LIBRARIES = -ljansson -L./sommelier-drive-cryptos/target/release -lsommelier_dri
 TARGET = $(BUILD)/main
 TEST_TARGETS = test/build/*
 CC = gcc
-# CFLAGS = -Wall -O2 -I./include
-CFLAGS = -Wall -O0 -I./include -I./sommelier-drive-cryptos -I../sommelier-db-build/install/include
+CFLAGS = -Wall -O2 -I./include -I./sommelier-drive-cryptos -I../sommelier-db-build/install/include
+# CFLAGS = -Wall -O0 -I./include -I./sommelier-drive-cryptos -I../sommelier-db-build/install/include
 
 $(TARGET): $(OBJECTS)
 	$(CC) $^ $(LIBRARIES) -o $(TARGET) 

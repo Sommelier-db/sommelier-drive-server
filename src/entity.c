@@ -643,8 +643,6 @@ json_t *decode_json_write_permission(WritePermission *wp) {
 
 // debug API
 
-#if DEBUG
-
 void debug_user(User *u) {
     if (u != NULL) {
         if (VERBOSE) {
@@ -760,5 +758,3 @@ void debug_authorization_seed(AuthorizationSeed *as) {
 void debug_path_vector(PathVector *);
 
 void debug_content_vector(ContentVector *);
-
-#endif

@@ -7,7 +7,7 @@
 
 #include "log.h"
 
-#define DEBUG (1 || VERBOSE)
+#define DEBUG (0 || VERBOSE)
 #define VERBOSE 0
 
 #define refsizeof(__TYPE__) (sizeof(__TYPE__ *))
@@ -24,6 +24,4 @@
 char *alloc_string(size_t);
 char *copy_string(char *dst, const char *src);
 
-#if DEBUG
 char *alloc_string_debug(size_t, const char *field);
-#endif
