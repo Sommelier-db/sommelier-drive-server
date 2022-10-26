@@ -467,7 +467,7 @@ Content *ReadContentBySharedKeyHash(sqlite3 *db, char *skh) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
             "SELECT ContentID, SharedKeyHash, AuthorizationPublicKey, Nonce, "
-            "ContentCipherText FROM content_table WHERE SharedKeyHash = %s;",
+            "ContentCipherText FROM content_table WHERE SharedKeyHash = '%s';",
             skh);
 
     if (DEBUG) {
