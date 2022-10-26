@@ -78,6 +78,7 @@ void api_authorization_seed_view(struct mg_connection *c,
             } else {
                 __ERROR_REPLY(c);
             }
+            free(body);
         } else {
             __ERROR_REPLY(c);
         }
@@ -108,13 +109,19 @@ void api_authorization_seed_view(struct mg_connection *c,
 
             // TODO: verify digital signature.
             User *writeUser = ReadUser(db, writeUserId);
-            IncrementUserNonce(db, writeUser);
+            if (writeUser != NULL) {
+                IncrementUserNonce(db, writeUser);
 
-            AuthorizationSeed *as = CreateAuthorizationSeed(db, pathId, ct);
+                AuthorizationSeed *as = CreateAuthorizationSeed(db, pathId, ct);
 
-            mg_http_reply(c, 200, "", "%d", as->id);
+                mg_http_reply(c, 200, "", "%d", as->id);
 
-            finalize_authorization_seed(as);
+                finalize_user(writeUser);
+                finalize_authorization_seed(as);
+            } else {
+                __ERROR_REPLY(c);
+            }
+            free(body);
         } else {
             __ERROR_REPLY(c);
         }

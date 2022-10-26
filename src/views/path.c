@@ -79,10 +79,13 @@ void api_path_view(struct mg_connection *c, struct mg_http_message *hm,
 
                 free(dumped);
                 free(jp);
+
                 finalize_path(p);
             } else {
                 __ERROR_REPLY(c);
             }
+
+            free(body);
         } else {
             __ERROR_REPLY(c);
         }
@@ -118,14 +121,27 @@ void api_path_view(struct mg_connection *c, struct mg_http_message *hm,
 
             // TODO: verify digital signature.
             User *writeUser = ReadUser(db, writeUserId);
-            IncrementUserNonce(db, writeUser);
 
-            Path *p =
-                CreatePath(db, readUserId, permissionHash, dataCT, keywordCT);
+            if (writeUser != NULL) {
+                IncrementUserNonce(db, writeUser);
 
-            mg_http_reply(c, 200, "", "%d", p->id);
+                Path *p = CreatePath(db, readUserId, permissionHash, dataCT,
+                                     keywordCT);
 
-            finalize_path(p);
+                if (p != NULL) {
+                    mg_http_reply(c, 200, "", "%d", p->id);
+
+                    finalize_path(p);
+                } else {
+                    __ERROR_REPLY(c);
+                }
+
+                finalize_user(writeUser);
+            } else {
+                __ERROR_REPLY(c);
+            }
+
+            free(body);
         } else {
             __ERROR_REPLY(c);
         }
@@ -188,15 +204,23 @@ void api_path_children_view(struct mg_connection *c, struct mg_http_message *hm,
                 json_object_get(body, "permissionHash"));
 
             PathVector *pv = FilterByPermissionHash(db, ph);
-            json_t *jpa = decode_json_path_vector(pv);
-            char *dumped = json_dumps(jpa, 0);
 
-            mg_http_reply(c, 200, "", "%s", dumped);
+            if (pv != NULL) {
+                json_t *jpa = decode_json_path_vector(pv);
+                char *dumped = json_dumps(jpa, 0);
 
-            free(dumped);
-            free(jpa);
-            free(ph);
-            finalize_path_vector(pv);
+                mg_http_reply(c, 200, "", "%s", dumped);
+
+                free(dumped);
+                free(jpa);
+                free(ph);
+
+                finalize_path_vector(pv);
+            } else {
+                __ERROR_REPLY(c);
+            }
+
+            free(body);
         }
     } else {
         __ERROR_REPLY(c);
@@ -260,14 +284,22 @@ void api_path_search_view(struct mg_connection *c, struct mg_http_message *hm,
                 (char *)json_string_value(json_object_get(body, "trapdoor"));
 
             PathVector *pv = SearchEncryptedPath(db, userId, td);
-            json_t *jpa = decode_json_path_vector(pv);
-            char *dumped = json_dumps(jpa, 0);
 
-            mg_http_reply(c, 200, "", "%s", dumped);
+            if (pv != NULL) {
+                json_t *jpa = decode_json_path_vector(pv);
+                char *dumped = json_dumps(jpa, 0);
 
-            free(dumped);
-            free(jpa);
-            finalize_path_vector(pv);
+                mg_http_reply(c, 200, "", "%s", dumped);
+
+                free(dumped);
+                free(jpa);
+
+                finalize_path_vector(pv);
+            } else {
+                __ERROR_REPLY(c);
+            }
+
+            free(body);
         }
     } else {
         __ERROR_REPLY(c);
