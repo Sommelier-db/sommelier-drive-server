@@ -106,8 +106,8 @@ User *ReadUser(sqlite3 *db, uint64_t id) {
     if (rc != SQLITE_OK) {
         if (DEBUG) {
             char msg[100] = "";
-            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code=%d)\n", rc);
-            errordebug(msg);
+            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code = %d)", rc);
+            logging_debug(msg);
         }
         return NULL;
     }
@@ -125,7 +125,7 @@ User *ReadUser(sqlite3 *db, uint64_t id) {
         return u;
     } else {
         if (DEBUG) {
-            errordebug("Some error encountered. - sqlite3_step");
+            logging_debug("SQLite3: SQL error occured.");
         }
 
         finalize_user(u);
@@ -175,8 +175,8 @@ Path *ReadPath(sqlite3 *db, uint64_t id) {
     if (rc != SQLITE_OK) {
         if (DEBUG) {
             char msg[100] = "";
-            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code=%d)\n", rc);
-            errordebug(msg);
+            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code = %d)", rc);
+            logging_debug(msg);
         }
         return NULL;
     }
@@ -195,7 +195,7 @@ Path *ReadPath(sqlite3 *db, uint64_t id) {
         return p;
     } else {
         if (DEBUG) {
-            errordebug("Some error encountered. - sqlite3_step");
+            logging_debug("SQLite3: SQL error occured.");
         }
 
         finalize_path(p);
@@ -220,7 +220,7 @@ static int callback_path_row(void *vec, int argc, char **argv,
 
 // depends on Sommelier-DB
 PathVector *SearchEncryptedPath(sqlite3 *db, uint64_t uid, char *trapdoor) {
-    char sql[MAX_SIZE_SQL_FILTER_BY_PREMISSION_HASH] = "";
+    char sql[MAX_SIZE_SQL_SEARCH_ENCRYPTED_PATH] = "";
     sprintf(sql,
             "SELECT PathID, UserID, PermissionHash, DataCipherText, "
             "KeywordCipherText FROM path_table WHERE "
@@ -278,8 +278,8 @@ SharedKey *ReadSharedKey(sqlite3 *db, uint64_t pid) {
     if (rc != SQLITE_OK) {
         if (DEBUG) {
             char msg[100] = "";
-            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code=%d)\n", rc);
-            errordebug(msg);
+            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code = %d)\n", rc);
+            logging_debug(msg);
         }
         return NULL;
     }
@@ -296,7 +296,7 @@ SharedKey *ReadSharedKey(sqlite3 *db, uint64_t pid) {
         return sk;
     } else {
         if (DEBUG) {
-            errordebug("Some error encountered. - sqlite3_step");
+            logging_debug("Some error encountered. - sqlite3_step");
         }
 
         finalize_shared_key(sk);
@@ -337,8 +337,8 @@ AuthorizationSeed *ReadAuthorizationSeed(sqlite3 *db, uint64_t pid) {
     if (rc != SQLITE_OK) {
         if (DEBUG) {
             char msg[100] = "";
-            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code=%d)\n", rc);
-            errordebug(msg);
+            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code = %d)\n", rc);
+            logging_debug(msg);
         }
         return NULL;
     }
@@ -355,7 +355,7 @@ AuthorizationSeed *ReadAuthorizationSeed(sqlite3 *db, uint64_t pid) {
         return as;
     } else {
         if (DEBUG) {
-            errordebug("Some error encountered. - sqlite3_step");
+            logging_debug("SQLite3: SQL error occured.");
         }
 
         finalize_authorization_seed(as);
@@ -395,8 +395,8 @@ Content *ReadContent(sqlite3 *db, uint64_t id) {
     if (rc != SQLITE_OK) {
         if (DEBUG) {
             char msg[100] = "";
-            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code=%d)\n", rc);
-            errordebug(msg);
+            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code = %d)\n", rc);
+            logging_debug(msg);
         }
         return NULL;
     }
@@ -415,7 +415,7 @@ Content *ReadContent(sqlite3 *db, uint64_t id) {
         return c;
     } else {
         if (DEBUG) {
-            errordebug("Some error encountered. - sqlite3_step");
+            logging_debug("SQLite3: SQL error occured.");
         }
 
         finalize_content(c);
@@ -439,8 +439,8 @@ Content *ReadContentBySharedKeyHash(sqlite3 *db, char *skh) {
     if (rc != SQLITE_OK) {
         if (DEBUG) {
             char msg[100] = "";
-            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code=%d)\n", rc);
-            errordebug(msg);
+            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code = %d)\n", rc);
+            logging_debug(msg);
         }
         return NULL;
     }
@@ -459,7 +459,7 @@ Content *ReadContentBySharedKeyHash(sqlite3 *db, char *skh) {
         return c;
     } else {
         if (DEBUG) {
-            errordebug("Some error encountered. - sqlite3_step");
+            logging_debug("SQLite3: SQL error occured.");
         }
 
         finalize_content(c);
