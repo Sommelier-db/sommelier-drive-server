@@ -19,5 +19,7 @@
 #define __ERROR_REPLY(c) \
     (mg_http_reply(c, 500, "", "{\"msg\": \"internal error\"}\n"))
 
-char *request_method(struct mg_str);
+char *request_uri(struct mg_http_message *);
+char *request_method(struct mg_http_message *);
+
 int json_has_key(json_t *, const char *, int);

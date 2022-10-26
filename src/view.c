@@ -1,16 +1,19 @@
 #include "view.h"
 
-char *request_method(struct mg_str s) {
-    char *method = INITIALIZE_STRING(s.len + 1);
-    strncpy(method, s.ptr, s.len);
-    method[s.len] = '\0';
+char *__mg_str_split_string(struct mg_str s) {
+    char *str = INITIALIZE_STRING(s.len + 1);
+    strncpy(str, s.ptr, s.len);
+    str[s.len] = '\0';
 
-    if (VERBOSE) {
-        echodebug("call request_method().");
-        echodebug(method);
-    }
+    return str;
+}
 
-    return method;
+char *request_uri(struct mg_http_message *hm) {
+    return __mg_str_split_string(hm->uri);
+}
+
+char *request_method(struct mg_http_message *hm) {
+    return __mg_str_split_string(hm->method);
 }
 
 int json_has_key(json_t *j, const char *key, int json_type) {

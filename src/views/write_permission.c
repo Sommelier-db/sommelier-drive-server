@@ -35,7 +35,16 @@ json_t *post_api_write_permission_request(struct mg_str s) {
 
 void api_write_permission_view(struct mg_connection *c,
                                struct mg_http_message *hm, sqlite3 *db) {
-    char *method = request_method(hm->method);
+    char *method = request_method(hm);
+
+    if (DEBUG) {
+        char *uri = request_uri(hm);
+
+        char msg[100] = "";
+        sprintf(msg, "HTTP Request: %s %s", method, uri);
+        logging_debug(msg);
+        free(uri);
+    }
 
     if (strcmp(method, "GET") == 0) {
         json_t *body = get_api_write_permission_request(hm->body);

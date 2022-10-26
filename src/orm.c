@@ -1,18 +1,36 @@
 #include "orm.h"
 
+#define MAX_SIZE_LOGGING_SQL_TEXT 256
+
 // TODO: execのerror-handling.
 
-void __exec_simple_sql(sqlite3 *db, const char *sql) {
+int __exec_simple_sql(sqlite3 *db, const char *sql, sqlite3_callback cb,
+                      void *obj) {
+    if (DEBUG) {
+        char _sql[MAX_SIZE_LOGGING_SQL_TEXT] = "";
+        strncpy(_sql, sql, MAX_SIZE_LOGGING_SQL_TEXT - 1);
+        _sql[MAX_SIZE_LOGGING_SQL_TEXT - 1] = '\0';
+
+        char *suffix = strlen(sql) >= MAX_SIZE_LOGGING_SQL_TEXT ? "..." : "";
+
+        char msg[MAX_SIZE_LOGGING_SQL_TEXT + 10] = "";
+        sprintf(msg, "SQL: %s%s", _sql, suffix);
+        logging_debug(msg);
+    }
+
     char *zErrMsg = NULL;
-    int rc = sqlite3_exec(db, sql, 0, 0, &zErrMsg);
+    int rc = sqlite3_exec(db, sql, cb, obj, &zErrMsg);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error (%d): %s\n", rc, zErrMsg);
+        char msg[200] = "";
+        sprintf(msg, "SQL error (%d): %s", rc, zErrMsg);
+        logging_error(msg);
         sqlite3_free(zErrMsg);
     }
+
+    return rc;
 }
 
-uint64_t __exec_simple_insert_sql(sqlite3 *db, const char *sql) {
-    __exec_simple_sql(db, sql);
+uint64_t __last_inserted_id(sqlite3 *db) {
     return (uint64_t)sqlite3_last_insert_rowid(db);
 }
 
@@ -64,7 +82,7 @@ void InitalizeDatabase(sqlite3 *db) {
     };
 
     for (int i = 0; i < SOMMELIER_DRIVE_INITIALIZE_SQL; i++) {
-        __exec_simple_sql(db, sql[i]);
+        __exec_simple_sql(db, sql[i], 0, 0);
     }
 }
 
@@ -77,15 +95,32 @@ User *CreateUser(sqlite3 *db, char *pkd, char *pkk) {
             "values ('%s', '%s', 1);",
             pkd, pkk);
 
+    int rc = __exec_simple_sql(db, sql, 0, 0);
+
+    if (rc == SQLITE_OK) {
+        uint64_t id = __last_inserted_id(db);
+        User *u = initialize_user();
+        set_user(u, id, pkd, pkk, 1);
+
+        if (DEBUG) {
+            debug_user(u);
+        }
+
+        return u;
+    } else {
+        return NULL;
+    }
+}
+
+static int callback_set_user(void *user, int argc, char **argv,
+                             char **azColName) {
+    set_user((User *)user, AS_U64(argv[0]), argv[1], argv[2], AS_U64(argv[3]));
+
     if (DEBUG) {
-        printf("    sql - %s\n", sql);
+        debug_user((User *)user);
     }
 
-    uint64_t id = __exec_simple_insert_sql(db, sql);
-    User *u = initialize_user();
-    set_user(u, id, pkd, pkk, 1);
-
-    return u;
+    return 0;
 }
 
 User *ReadUser(sqlite3 *db, uint64_t id) {
@@ -95,42 +130,17 @@ User *ReadUser(sqlite3 *db, uint64_t id) {
             "user_table WHERE UserID = %ld;",
             id);
 
-    if (DEBUG) {
-        printf("    sql - %s\n", sql);
+    User *user = initialize_user();
+    // for error-handling, set `id = MAX` if no row get by execute SELECT.
+    set_user_id(user, UINT64_MAX);
+    int rc = __exec_simple_sql(db, sql, callback_set_user, (void *)user);
+
+    if (rc != SQLITE_OK || user->id == UINT64_MAX) {
+        finalize_user(user);
+        user = NULL;
     }
 
-    sqlite3_stmt *stmt = NULL;
-    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
-    if (rc != SQLITE_OK) {
-        if (DEBUG) {
-            char msg[100] = "";
-            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code=%d)\n", rc);
-            errordebug(msg);
-        }
-        return NULL;
-    }
-
-    User *u = initialize_user();
-
-    rc = sqlite3_step(stmt);
-    if (rc == SQLITE_ROW) {
-        uint64_t id = (uint64_t)sqlite3_column_int(stmt, 0);
-        char *pkd = (char *)sqlite3_column_text(stmt, 1);
-        char *pkk = (char *)sqlite3_column_text(stmt, 2);
-        uint64_t nonce = (uint64_t)sqlite3_column_int(stmt, 3);
-
-        set_user(u, id, pkd, pkk, nonce);
-        return u;
-    } else {
-        if (DEBUG) {
-            errordebug("Some error encountered. - sqlite3_step");
-        }
-
-        finalize_user(u);
-        return NULL;
-    }
-
-    return NULL;
+    return user;
 }
 
 void IncrementUserNonce(sqlite3 *db, User *u) {
@@ -138,11 +148,7 @@ void IncrementUserNonce(sqlite3 *db, User *u) {
     char sql[MAX_SIZE_SQL_PLANE_TEXT] = "";
     sprintf(sql, "UPDATE user_table SET Nonce=%ld WHERE UserID=%ld;", n, u->id);
 
-    if (DEBUG) {
-        printf("    sql - %s\n", sql);
-    }
-
-    __exec_simple_sql(db, sql);
+    __exec_simple_sql(db, sql, 0, 0);
 }
 
 // Create Path API.
@@ -154,11 +160,8 @@ Path *CreatePath(sqlite3 *db, uint64_t uid, char *ph, char *ctd, char *ctk) {
             "KeywordCipherText) values (%ld, '%s', '%s', '%s');",
             uid, ph, ctd, ctk);
 
-    if (DEBUG) {
-        printf("    sql - %s\n", sql);
-    }
-
-    uint64_t id = __exec_simple_insert_sql(db, sql);
+    // uint64_t id = __exec_simple_insert_sql(db, sql, 0, 0);
+    uint64_t id = __last_inserted_id(db);
     Path *p = initialize_path();
     set_path(p, id, uid, ph, ctd, ctk);
 
@@ -173,7 +176,7 @@ Path *ReadPath(sqlite3 *db, uint64_t id) {
             id);
 
     if (DEBUG) {
-        printf("    sql - %s\n", sql);
+        printf("  sql - %s\n", sql);
     }
 
     sqlite3_stmt *stmt = NULL;
@@ -181,8 +184,8 @@ Path *ReadPath(sqlite3 *db, uint64_t id) {
     if (rc != SQLITE_OK) {
         if (DEBUG) {
             char msg[100] = "";
-            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code=%d)\n", rc);
-            errordebug(msg);
+            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code = %d)", rc);
+            logging_debug(msg);
         }
         return NULL;
     }
@@ -201,7 +204,7 @@ Path *ReadPath(sqlite3 *db, uint64_t id) {
         return p;
     } else {
         if (DEBUG) {
-            errordebug("Some error encountered. - sqlite3_step");
+            logging_debug("SQLite3: SQL error occured.");
         }
 
         finalize_path(p);
@@ -211,14 +214,14 @@ Path *ReadPath(sqlite3 *db, uint64_t id) {
     return NULL;
 }
 
-static int callback_search_path(void *vec, int argc, char **argv,
-                                char **azColName) {
+static int callback_path_row(void *vec, int argc, char **argv,
+                             char **azColName) {
+    Path p = {AS_U64(argv[0]), AS_U64(argv[1]), argv[2], argv[3], argv[4]};
+
     if (DEBUG) {
-        printf("    select - id: %s, uid: %s, ph: %s, ctd: %s, ctk: %s\n",
-               argv[0], argv[1], argv[2], argv[3], argv[4]);
+        debug_path(&p);
     }
 
-    Path p = {AS_U64(argv[0]), AS_U64(argv[1]), argv[2], argv[3], argv[4]};
     push_path_vector((PathVector *)vec, &p);
 
     return 0;
@@ -226,26 +229,16 @@ static int callback_search_path(void *vec, int argc, char **argv,
 
 // depends on Sommelier-DB
 PathVector *SearchEncryptedPath(sqlite3 *db, uint64_t uid, char *trapdoor) {
-    char sql[MAX_SIZE_SQL_FILTER_BY_PREMISSION_HASH] = "";
+    char sql[MAX_SIZE_SQL_SEARCH_ENCRYPTED_PATH] = "";
     sprintf(sql,
             "SELECT PathID, UserID, PermissionHash, DataCipherText, "
             "KeywordCipherText FROM path_table WHERE "
             "test_cipher(KeywordCipherText, '%s') = 1;",
             trapdoor);
 
-    if (DEBUG) {
-        printf("    sql - %s\n", sql);
-    }
-
     PathVector *vec = initialize_path_vector();
 
-    char *zErrMsg = 0;
-    int rc = sqlite3_exec(db, sql, callback_search_path, (void *)vec, &zErrMsg);
-
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error: %s\n", zErrMsg);
-        sqlite3_free(zErrMsg);
-    }
+    __exec_simple_sql(db, sql, callback_path_row, (void *)vec);
 
     return vec;
 }
@@ -257,24 +250,12 @@ PathVector *FilterByPermissionHash(sqlite3 *db, char *ph) {
             "KeywordCipherText FROM path_table WHERE PermissionHash = '%s';",
             ph);
 
-    if (DEBUG) {
-        printf("    sql - %s\n", sql);
-    }
-
     PathVector *vec = initialize_path_vector();
-    char *zErrMsg = 0;
-    int rc = sqlite3_exec(db, sql, callback_search_path, (void *)vec, &zErrMsg);
 
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error: %s\n", zErrMsg);
-        sqlite3_free(zErrMsg);
-    }
+    __exec_simple_sql(db, sql, callback_path_row, (void *)vec);
 
     return vec;
 }
-
-// depends on Sommelier-DB
-PathVector *SearchEncryptedPath(sqlite3 *db, uint64_t, char *);
 
 SharedKey *CreateSharedKey(sqlite3 *db, uint64_t pid, char *ctsk) {
     char sql[MAX_SIZE_SQL_CREATE_SHARED_KEY] = "";
@@ -283,11 +264,7 @@ SharedKey *CreateSharedKey(sqlite3 *db, uint64_t pid, char *ctsk) {
             "(%ld, '%s')",
             pid, ctsk);
 
-    if (DEBUG) {
-        printf("    sql - %s\n", sql);
-    }
-
-    uint64_t id = __exec_simple_insert_sql(db, sql);
+    uint64_t id = __last_inserted_id(db);
     SharedKey *sk = initialize_shared_key();
     set_shared_key(sk, id, pid, ctsk);
 
@@ -302,7 +279,7 @@ SharedKey *ReadSharedKey(sqlite3 *db, uint64_t pid) {
             pid);
 
     if (DEBUG) {
-        printf("    sql - %s\n", sql);
+        printf("  sql - %s\n", sql);
     }
 
     sqlite3_stmt *stmt = NULL;
@@ -310,8 +287,8 @@ SharedKey *ReadSharedKey(sqlite3 *db, uint64_t pid) {
     if (rc != SQLITE_OK) {
         if (DEBUG) {
             char msg[100] = "";
-            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code=%d)\n", rc);
-            errordebug(msg);
+            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code = %d)\n", rc);
+            logging_debug(msg);
         }
         return NULL;
     }
@@ -328,7 +305,7 @@ SharedKey *ReadSharedKey(sqlite3 *db, uint64_t pid) {
         return sk;
     } else {
         if (DEBUG) {
-            errordebug("Some error encountered. - sqlite3_step");
+            logging_debug("Some error encountered. - sqlite3_step");
         }
 
         finalize_shared_key(sk);
@@ -346,11 +323,7 @@ AuthorizationSeed *CreateAuthorizationSeed(sqlite3 *db, uint64_t pid,
             "AuthorizationSeedCipherText) values (%ld, '%s');",
             pid, ctas);
 
-    if (DEBUG) {
-        printf("    sql - %s\n", sql);
-    }
-
-    uint64_t id = __exec_simple_insert_sql(db, sql);
+    uint64_t id = __last_inserted_id(db);
     AuthorizationSeed *as = initialize_authorization_seed();
     set_authorization_seed(as, id, pid, ctas);
 
@@ -365,7 +338,7 @@ AuthorizationSeed *ReadAuthorizationSeed(sqlite3 *db, uint64_t pid) {
             pid);
 
     if (DEBUG) {
-        printf("    sql - %s\n", sql);
+        printf("  sql - %s\n", sql);
     }
 
     sqlite3_stmt *stmt = NULL;
@@ -373,8 +346,8 @@ AuthorizationSeed *ReadAuthorizationSeed(sqlite3 *db, uint64_t pid) {
     if (rc != SQLITE_OK) {
         if (DEBUG) {
             char msg[100] = "";
-            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code=%d)\n", rc);
-            errordebug(msg);
+            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code = %d)\n", rc);
+            logging_debug(msg);
         }
         return NULL;
     }
@@ -391,7 +364,7 @@ AuthorizationSeed *ReadAuthorizationSeed(sqlite3 *db, uint64_t pid) {
         return as;
     } else {
         if (DEBUG) {
-            errordebug("Some error encountered. - sqlite3_step");
+            logging_debug("SQLite3: SQL error occured.");
         }
 
         finalize_authorization_seed(as);
@@ -408,11 +381,7 @@ Content *CreateContent(sqlite3 *db, char *skh, char *pka, char *ctc) {
             "Nonce, ContentCipherText) values ('%s', '%s', 1, '%s');",
             skh, pka, ctc);
 
-    if (DEBUG) {
-        printf("    sql - %s\n", sql);
-    }
-
-    uint64_t id = __exec_simple_insert_sql(db, sql);
+    uint64_t id = __last_inserted_id(db);
     Content *c = initialize_content();
     set_content(c, id, skh, pka, 1, ctc);
 
@@ -427,7 +396,7 @@ Content *ReadContent(sqlite3 *db, uint64_t id) {
             id);
 
     if (DEBUG) {
-        printf("    sql - %s\n", sql);
+        printf("  sql - %s\n", sql);
     }
 
     sqlite3_stmt *stmt = NULL;
@@ -435,8 +404,8 @@ Content *ReadContent(sqlite3 *db, uint64_t id) {
     if (rc != SQLITE_OK) {
         if (DEBUG) {
             char msg[100] = "";
-            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code=%d)\n", rc);
-            errordebug(msg);
+            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code = %d)\n", rc);
+            logging_debug(msg);
         }
         return NULL;
     }
@@ -455,7 +424,7 @@ Content *ReadContent(sqlite3 *db, uint64_t id) {
         return c;
     } else {
         if (DEBUG) {
-            errordebug("Some error encountered. - sqlite3_step");
+            logging_debug("SQLite3: SQL error occured.");
         }
 
         finalize_content(c);
@@ -471,7 +440,7 @@ Content *ReadContentBySharedKeyHash(sqlite3 *db, char *skh) {
             skh);
 
     if (DEBUG) {
-        printf("    sql - %s\n", sql);
+        printf("  sql - %s\n", sql);
     }
 
     sqlite3_stmt *stmt = NULL;
@@ -479,8 +448,8 @@ Content *ReadContentBySharedKeyHash(sqlite3 *db, char *skh) {
     if (rc != SQLITE_OK) {
         if (DEBUG) {
             char msg[100] = "";
-            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code=%d)\n", rc);
-            errordebug(msg);
+            sprintf(msg, "sqlite3_prepare_v2 is failed. (err_code = %d)\n", rc);
+            logging_debug(msg);
         }
         return NULL;
     }
@@ -499,7 +468,7 @@ Content *ReadContentBySharedKeyHash(sqlite3 *db, char *skh) {
         return c;
     } else {
         if (DEBUG) {
-            errordebug("Some error encountered. - sqlite3_step");
+            logging_debug("SQLite3: SQL error occured.");
         }
 
         finalize_content(c);
@@ -514,11 +483,7 @@ void UpdateContent(sqlite3 *db, Content *c) {
             "ContentID=%ld;",
             c->nonce, c->content_cipher_text, c->id);
 
-    if (DEBUG) {
-        printf("    sql - %s\n", sql);
-    }
-
-    __exec_simple_sql(db, sql);
+    __exec_simple_sql(db, sql, 0, 0);
 }
 
 void IncrementContentNonce(sqlite3 *db, Content *c) {
@@ -527,26 +492,18 @@ void IncrementContentNonce(sqlite3 *db, Content *c) {
     sprintf(sql, "UPDATE content_table SET Nonce=%ld WHERE ContentID=%ld;", n,
             c->id);
 
-    if (DEBUG) {
-        printf("    sql - %s\n", sql);
-    }
-
-    __exec_simple_sql(db, sql);
+    __exec_simple_sql(db, sql, 0, 0);
 }
 
-static int callback_filter_contents_by_shared_key_hash(void *vec, int argc,
-                                                       char **argv,
-                                                       char **azColName) {
+static int callback_content_row(void *vec, int argc, char **argv,
+                                char **azColName) {
+    Content c = {AS_U64(argv[0]), argv[1], argv[2], AS_U64(argv[3]), argv[4]};
+
     if (DEBUG) {
-        printf("    select - id: %s, skh: %s, pka: %s, nonce: %s, ctc: %s\n",
-               argv[0], argv[1], argv[2], argv[3], argv[4]);
+        debug_content(&c);
     }
 
-    // Content *c = initialize_content();
-    // set_content(c, AS_U64(argv[0]), argv[1], argv[2]);
-    Content c = {AS_U64(argv[0]), argv[1], argv[2], AS_U64(argv[3]), argv[4]};
     push_content_vector((ContentVector *)vec, &c);
-    // finalize_content(c);
 
     return 0;
 }
@@ -559,14 +516,8 @@ ContentVector *FilterBySharedKeyHash(sqlite3 *db, char *skh) {
             skh);
 
     ContentVector *vec = initialize_content_vector();
-    char *zErrMsg = 0;
-    int rc = sqlite3_exec(db, sql, callback_filter_contents_by_shared_key_hash,
-                          (void *)vec, &zErrMsg);
 
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error: %s\n", zErrMsg);
-        sqlite3_free(zErrMsg);
-    }
+    __exec_simple_sql(db, sql, callback_content_row, (void *)vec);
 
     return vec;
 }
@@ -579,11 +530,7 @@ WritePermission *CreateWritePermission(sqlite3 *db, uint64_t pid,
             "values (%ld, %ld);",
             pid, uid);
 
-    if (DEBUG) {
-        printf("    sql - %s\n", sql);
-    }
-
-    uint64_t id = __exec_simple_insert_sql(db, sql);
+    uint64_t id = __last_inserted_id(db);
     WritePermission *wp = initialize_write_permission();
     set_write_permission(wp, id, pid, uid);
 
@@ -596,6 +543,10 @@ WritePermission *ReadWritePermission(sqlite3 *db, uint64_t pid) {
             "SELECT WritePermissionID, PathID, UserID FROM "
             "write_permission_table WHERE PathID = %ld;",
             pid);
+
+    if (DEBUG) {
+        printf("  sql - %s\n", sql);
+    }
 
     sqlite3_stmt *stmt = NULL;
     int return_value = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);

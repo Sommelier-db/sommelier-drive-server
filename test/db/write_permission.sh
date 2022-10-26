@@ -1,6 +1,12 @@
 #!/usr/bin/bash
 
+SRC=test/db/write_permission.c
 BIN=test/build/db_write_permission
+OBJECTS="object/log.o object/util.o object/entity.o object/orm.o"
+C_UTIL_FLAGS="-Wall -O0"
+C_INCLUDE_FLAGS="-I./include -I./sommelier-drive-cryptos -I../sommelier-db-build/install/include"
+C_LINK_FLAGS="-ljansson -L./sommelier-drive-cryptos/target/release -lsommelier_drive_cryptos -L../sommelier-db-build/install/lib -lsommelier-db"
+RUNTIME_PATH="../sommelier-db-build/install/lib:./sommelier-drive-cryptos/target/release"
 
-gcc -Wall -I./include test/db/write_permission.c object/util.o object/entity.o object/orm.o -lsqlite3 -ljansson -o $BIN 
-$BIN
+gcc $C_UTIL_FLAGS $C_INCLUDE_FLAGS $SRC $OBJECTS $C_LINK_FLAGS -o $BIN
+LD_LIBRARY_PATH=$RUNTIME_PATH $BIN
