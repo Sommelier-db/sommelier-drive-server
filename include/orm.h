@@ -1,8 +1,7 @@
 #pragma once
 
-#include "sommelier-db.h"
-
 #include "entity.h"
+#include "sommelier-db.h"
 
 #define SOMMELIER_DRIVE_N_TABLES 5
 #define SOMMELIER_DRIVE_INITIALIZE_SQL 7
