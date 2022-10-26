@@ -143,6 +143,7 @@ json_t *decode_json_content_vector(ContentVector *);
 void debug_user(User *);
 void debug_path(Path *);
 void debug_shared_key(SharedKey *);
+void debug_authorization_seed(AuthorizationSeed *);
 void debug_content(Content *);
 void debug_write_permission(WritePermission *);
 void debug_path_vector(PathVector *);

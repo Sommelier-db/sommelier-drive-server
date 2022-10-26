@@ -62,6 +62,10 @@ void api_content_view(struct mg_connection *c, struct mg_http_message *hm,
     if (strcmp(method, "GET") == 0) {
         json_t *body = get_api_content_request(hm->body);
 
+        if (DEBUG) {
+            logging_http_body(hm);
+        }
+
         if (body != NULL) {
             char *skh = (char *)json_string_value(
                 json_object_get(body, "sharedKeyHash"));
@@ -78,12 +82,16 @@ void api_content_view(struct mg_connection *c, struct mg_http_message *hm,
             } else {
                 __ERROR_REPLY(c);
             }
-
+            free(body);
         } else {
             __ERROR_REPLY(c);
         }
     } else if (strcmp(method, "POST") == 0) {
         json_t *body = post_api_content_request(hm->body);
+
+        if (DEBUG) {
+            logging_http_body(hm);
+        }
 
         if (body != NULL) {
             char *skh = (char *)json_string_value(
@@ -94,14 +102,23 @@ void api_content_view(struct mg_connection *c, struct mg_http_message *hm,
 
             Content *con = CreateContent(db, skh, apk, ct);
 
-            mg_http_reply(c, 200, "", "%d", con->id);
+            if (con != NULL) {
+                mg_http_reply(c, 200, "", "%d", con->id);
+                finalize_content(con);
+            } else {
+                __ERROR_REPLY(c);
+            }
 
-            finalize_content(con);
+            free(body);
         } else {
             __ERROR_REPLY(c);
         }
     } else if (strcmp(method, "PUT") == 0) {
         json_t *body = put_api_content_request(hm->body);
+
+        if (DEBUG) {
+            logging_http_body(hm);
+        }
 
         if (body != NULL) {
             char *skh = (char *)json_string_value(
@@ -109,13 +126,20 @@ void api_content_view(struct mg_connection *c, struct mg_http_message *hm,
             char *ct = (char *)json_string_value(json_object_get(body, "ct"));
 
             Content *con = ReadContentBySharedKeyHash(db, skh);
-            set_content_content_cipher_text(con, ct);
-            increment_content_nonce(con);
-            UpdateContent(db, con);
 
-            mg_http_reply(c, 200, "", "%d", con->id);
+            if (con != NULL) {
+                set_content_content_cipher_text(con, ct);
+                increment_content_nonce(con);
+                UpdateContent(db, con);
 
-            finalize_content(con);
+                mg_http_reply(c, 200, "", "%d", con->id);
+
+                finalize_content(con);
+            } else {
+                __ERROR_REPLY(c);
+            }
+
+            free(body);
         } else {
             __ERROR_REPLY(c);
         }

@@ -4,33 +4,42 @@ json_t *get_api_user_request(struct mg_str s) {
     json_error_t err;
     json_t *j = json_loads(s.ptr, 0, &err);
 
-    // userId: int
-    if (json_has_key(j, "userId", JSON_INTEGER)) {
-        return j;
+    if (j != NULL) {
+        // userId: int
+        int c = json_has_key(j, "userId", JSON_INTEGER);
+
+        if (!c) {
+            free(j);
+            j = NULL;
+        }
     } else {
-        free(j);
-        return NULL;
+        logging_error("json is NULL. - get_api_user_request");
     }
+
+    return j;
 }
 
 json_t *post_api_user_request(struct mg_str s) {
     json_error_t err;
     json_t *j = json_loads(s.ptr, 0, &err);
 
-    // dataPK: string, keywordPK: string, permissionHash: string,
-    // dataCT: string, keywordCT: string
-    int c = json_has_key(j, "dataPK", JSON_STRING) &&
-            json_has_key(j, "keywordPK", JSON_STRING) &&
-            // json_has_key(j, "permissionHash", JSON_STRING) &&
-            json_has_key(j, "dataCT", JSON_STRING) &&
-            json_has_key(j, "keywordCT", JSON_STRING);
+    if (j != NULL) {
+        // dataPK: string, keywordPK: string, dataCT: string, keywordCT: string
+        int c = json_has_key(j, "dataPK", JSON_STRING) &&
+                json_has_key(j, "keywordPK", JSON_STRING) &&
+                // json_has_key(j, "permissionHash", JSON_STRING) &&
+                json_has_key(j, "dataCT", JSON_STRING) &&
+                json_has_key(j, "keywordCT", JSON_STRING);
 
-    if (c) {
-        return j;
+        if (!c) {
+            free(j);
+            j = NULL;
+        }
     } else {
-        free(j);
-        return NULL;
+        logging_error("json is NULL. - post_api_user_request");
     }
+
+    return j;
 }
 
 // GET, POST /api/user
@@ -49,6 +58,10 @@ void api_user_view(struct mg_connection *c, struct mg_http_message *hm,
     if (strcmp(method, "GET") == 0) {
         json_t *body = get_api_user_request(hm->body);
 
+        if (DEBUG) {
+            logging_http_body(hm);
+        }
+
         if (body != NULL) {
             uint64_t userId =
                 (uint64_t)json_integer_value(json_object_get(body, "userId"));
@@ -65,11 +78,17 @@ void api_user_view(struct mg_connection *c, struct mg_http_message *hm,
             } else {
                 __ERROR_REPLY(c);
             }
+
+            free(body);
         } else {
             __ERROR_REPLY(c);
         }
     } else if (strcmp(method, "POST") == 0) {
         json_t *body = post_api_user_request(hm->body);
+
+        if (DEBUG) {
+            logging_http_body(hm);
+        }
 
         if (body != NULL) {
             char *dpk =
@@ -84,21 +103,34 @@ void api_user_view(struct mg_connection *c, struct mg_http_message *hm,
             // TODO: NULL check?
             User *u = CreateUser(db, dpk, kpk);
 
-            char *ph = computePermissionHash(u->id, "/");
+            if (u != NULL) {
+                char *ph = computePermissionHash(u->id, "/");
 
-            Path *p = CreatePath(db, u->id, ph, dct, kct);
+                Path *p = CreatePath(db, u->id, ph, dct, kct);
 
-            WritePermission *wp = CreateWritePermission(db, p->id, u->id);
+                if (p != NULL) {
+                    WritePermission *wp =
+                        CreateWritePermission(db, p->id, u->id);
 
-            if (wp != NULL) {
-                mg_http_reply(c, 200, "", "%d", u->id);
+                    if (wp != NULL) {
+                        mg_http_reply(c, 200, "", "%d", u->id);
+
+                        finalize_write_permission(wp);
+                    } else {
+                        __ERROR_REPLY(c);
+                    }
+
+                    finalize_path(p);
+                } else {
+                    __ERROR_REPLY(c);
+                }
 
                 finalize_user(u);
-                finalize_path(p);
-                finalize_write_permission(wp);
             } else {
                 __ERROR_REPLY(c);
             }
+
+            free(body);
         } else {
             __ERROR_REPLY(c);
         }

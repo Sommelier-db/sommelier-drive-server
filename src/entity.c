@@ -739,6 +739,24 @@ void debug_write_permission(WritePermission *wp) {
     }
 }
 
+void debug_authorization_seed(AuthorizationSeed *as) {
+    if (as != NULL) {
+        char msg[256] = "";
+        if (VERBOSE) {
+            sprintf(msg,
+                    "<AuthorizationSeed id: %ld, path_id: %ld, seed_ct: '%s'>",
+                    as->id, as->path_id, as->authorization_seed_cipher_text);
+        } else {
+            sprintf(msg, "<AuthorizationSeed id: %ld, pid: %ld>", as->id,
+                    as->path_id);
+        }
+        logging_debug(msg);
+
+    } else {
+        logging_error("AuthorizationSeed is NULL.");
+    }
+}
+
 void debug_path_vector(PathVector *);
 
 void debug_content_vector(ContentVector *);

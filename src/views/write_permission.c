@@ -49,6 +49,10 @@ void api_write_permission_view(struct mg_connection *c,
     if (strcmp(method, "GET") == 0) {
         json_t *body = get_api_write_permission_request(hm->body);
 
+        if (DEBUG) {
+            logging_http_body(hm);
+        }
+
         if (body != NULL) {
             uint64_t pathId =
                 (uint64_t)json_integer_value(json_object_get(body, "pathId"));
@@ -62,15 +66,22 @@ void api_write_permission_view(struct mg_connection *c,
 
                 free(dumped);
                 free(jwp);
+
                 finalize_write_permission(wp);
             } else {
                 __ERROR_REPLY(c);
             }
+
+            free(body);
         } else {
             __ERROR_REPLY(c);
         }
     } else if (strcmp(method, "POST") == 0) {
         json_t *body = post_api_write_permission_request(hm->body);
+
+        if (DEBUG) {
+            logging_http_body(hm);
+        }
 
         if (body != NULL) {
             uint64_t writeUserId = (uint64_t)json_integer_value(
@@ -82,13 +93,26 @@ void api_write_permission_view(struct mg_connection *c,
 
             // TODO: verify digital signature.
             User *writeUser = ReadUser(db, writeUserId);
-            IncrementUserNonce(db, writeUser);
 
-            WritePermission *wp = CreateWritePermission(db, pathId, userId);
+            if (writeUser != NULL) {
+                IncrementUserNonce(db, writeUser);
 
-            mg_http_reply(c, 200, "", "%d", wp->id);
+                WritePermission *wp = CreateWritePermission(db, pathId, userId);
 
-            finalize_write_permission(wp);
+                if (wp != NULL) {
+                    mg_http_reply(c, 200, "", "%d", wp->id);
+
+                    finalize_write_permission(wp);
+                } else {
+                    __ERROR_REPLY(c);
+                }
+
+                finalize_user(writeUser);
+            } else {
+                __ERROR_REPLY(c);
+            }
+
+            free(body);
         } else {
             __ERROR_REPLY(c);
         }
