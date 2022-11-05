@@ -332,7 +332,8 @@ json_t *decode_json_shared_key(SharedKey *sk) {
     return json;
 }
 
-// AuthorizationSeed API
+/*
+// AuthorizationSeed API: deprecate
 
 AuthorizationSeed *initialize_authorization_seed() {
     AuthorizationSeed *as = INITIALIZE(AuthorizationSeed);
@@ -408,6 +409,7 @@ json_t *decode_json_authorization_seed(AuthorizationSeed *as) {
 
     return json;
 }
+*/
 
 // Content API
 
@@ -588,7 +590,8 @@ json_t *decode_json_content_vector(ContentVector *vec) {
     return array;
 }
 
-// WritePermission API
+/*
+// WritePermission API: deprecate
 
 WritePermission *initialize_write_permission() {
     WritePermission *wp = INITIALIZE(WritePermission);
@@ -640,6 +643,7 @@ json_t *decode_json_write_permission(WritePermission *wp) {
 
     return json;
 }
+*/
 
 // debug API
 
@@ -719,6 +723,9 @@ void debug_content(Content *c) {
     }
 }
 
+/*
+// deprecate
+
 void debug_write_permission(WritePermission *wp) {
     if (wp != NULL) {
         char msg[256] = "";
@@ -754,6 +761,8 @@ void debug_authorization_seed(AuthorizationSeed *as) {
         logging_error("AuthorizationSeed is NULL.");
     }
 }
+*/
+
 
 void debug_path_vector(PathVector *);
 

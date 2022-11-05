@@ -28,12 +28,12 @@ void InitalizeDatabase(SommelierDBMS *dbms) {
             SharedKeyCipherText TEXT NOT NULL,\
             CONSTRAINT path_id_ref_to_path_table FOREIGN KEY (PathID) REFERENCES path_table (PathID)\
         );",                          // (3) create shared_key table
-        "CREATE TABLE authorization_seed_table (\
+        /*"CREATE TABLE authorization_seed_table (\
             AuthorizationSeedID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
             PathID INTEGER NOT NULL UNIQUE,\
             AuthorizationSeedCipherText TEXT NOT NULL,\
             CONSTRAINT path_id_ref_to_path_table FOREIGN KEY (PathID) REFERENCES path_table (PathID)\
-        );",                          // (4) create authorization_seed table
+        );",                          // (4) create authorization_seed table */
         "CREATE TABLE content_table (\
             ContentID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
             SharedKeyHash TEXT NOT NULL,\
@@ -41,13 +41,13 @@ void InitalizeDatabase(SommelierDBMS *dbms) {
             Nonce INTEGER NOT NULL,\
             ContentCipherText TEXT NOT NULL\
         );",                          // (5) create content table
-        "CREATE TABLE write_permission_table (\
+        /*"CREATE TABLE write_permission_table (\
             WritePermissionID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
             PathID INTEGER NOT NULL UNIQUE,\
             UserID INTEGER NOT NULL,\
             CONSTRAINT content_path_id_ref_to_path_table FOREIGN KEY (PathID) REFERENCES path_table (PathID),\
             CONSTRAINT content_user_id_ref_to_user_table FOREIGN KEY (UserID) REFERENCES user_table (UserID)\
-        );",                          // (6) create write_permission table
+        );",                          // (6) create write_permission table */
         "PRAGMA foreign_keys=true;",  // (7) enable forign key
     };
 
@@ -282,6 +282,9 @@ SharedKey *ReadSharedKey(SommelierDBMS *dbms, uint64_t pid) {
     return sk;
 }
 
+/*
+// deprecate: WritePermission
+
 AuthorizationSeed *CreateAuthorizationSeed(SommelierDBMS *dbms, uint64_t pid,
                                            char *ctas) {
     char sql[MAX_SIZE_SQL_CREATE_AUTHORIZATION_SEED] = "";
@@ -338,6 +341,8 @@ AuthorizationSeed *ReadAuthorizationSeed(SommelierDBMS *dbms, uint64_t pid) {
 
     return as;
 }
+
+*/
 
 Content *CreateContent(SommelierDBMS *dbms, char *skh, char *pka, char *ctc) {
     char sql[MAX_SIZE_SQL_CREATE_CONTENT] = "";
@@ -462,6 +467,9 @@ ContentVector *FilterBySharedKeyHash(SommelierDBMS *dbms, char *skh) {
     return vec;
 }
 
+/*
+// deprecate: WritePermission
+
 WritePermission *CreateWritePermission(SommelierDBMS *dbms, uint64_t pid,
                                        uint64_t uid) {
     char sql[MAX_SIZE_SQL_CREATE_WRITE_PERMISSION] = "";
@@ -518,3 +526,4 @@ WritePermission *ReadWritePermission(SommelierDBMS *dbms, uint64_t pid) {
 
     return wp;
 }
+*/

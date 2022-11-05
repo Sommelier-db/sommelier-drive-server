@@ -1,5 +1,6 @@
 #include "views/write_permission.h"
 
+/* deprecate
 // GET, POST /api/write-permission
 json_t *get_api_write_permission_request(struct mg_str s) {
     json_error_t err;
@@ -121,3 +122,4 @@ void api_write_permission_view(struct mg_connection *c,
     }
     free(method);
 }
+*/
