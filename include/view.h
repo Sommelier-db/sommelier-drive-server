@@ -9,12 +9,12 @@
 #include "sommelier-db.h"
 #include "sommelier_drive_cryptos.h"
 #include "util.h"
-#include "views/authorization_seed.h"
+// #include "views/authorization_seed.h"
 #include "views/content.h"
 #include "views/path.h"
 #include "views/shared_key.h"
 #include "views/user.h"
-#include "views/write_permission.h"
+// #include "views/write_permission.h"
 
 #define __ERROR_REPLY(c) \
     (mg_http_reply(c, 500, "", "{\"msg\": \"internal error\"}\n"))
