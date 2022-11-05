@@ -56,7 +56,8 @@ AuthorizationSeed *CreateAuthorizationSeed(SommelierDBMS *, uint64_t, char *);
 AuthorizationSeed *ReadAuthorizationSeed(SommelierDBMS *, uint64_t);
 */
 
-Content *CreateContent(SommelierDBMS *, char *, char *, char *);
+// Content *CreateContent(SommelierDBMS *, char *, char *, char *);
+Content *CreateContent(SommelierDBMS *, char *, char *);
 
 Content *ReadContent(SommelierDBMS *, uint64_t);
 

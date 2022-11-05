@@ -88,18 +88,19 @@ json_t *decode_json_authorization_seed(AuthorizationSeed *);
 typedef struct content_table_row {
     uint64_t id;
     char *shared_key_hash;
-    char *authorization_public_key;
+    // char *authorization_public_key;
     uint64_t nonce;
     char *content_cipher_text;
 } Content;
 
 Content *initialize_content();
 void finalize_content(Content *);
-void set_content(Content *, uint64_t, const char *, const char *, uint64_t,
-                 const char *);
+void set_content(Content *, uint64_t, const char *, uint64_t, const char *);
+// void set_content(Content *, uint64_t, const char *, const char *, uint64_t,
+//                  const char *);
 void set_content_id(Content *, uint64_t);
 void set_content_shared_key_hash(Content *, const char *);
-void set_content_authorization_public_key(Content *, const char *);
+// void set_content_authorization_public_key(Content *, const char *);
 void set_content_nonce(Content *, uint64_t);
 void set_content_content_cipher_text(Content *, const char *);
 uint64_t increment_content_nonce(Content *);

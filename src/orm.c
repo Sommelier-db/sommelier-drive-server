@@ -13,7 +13,7 @@ void InitalizeDatabase(SommelierDBMS *dbms) {
             DataPublicKey TEXT NOT NULL,\
             KeywordPublicKey TEXT NOT NULL,\
             Nonce INTEGER NOT NULL\
-        );",                          // (1) create user table
+        );",  // (1) create user table
         "CREATE TABLE path_table (\
             PathID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
             UserID INTEGER NOT NULL,\
@@ -21,19 +21,26 @@ void InitalizeDatabase(SommelierDBMS *dbms) {
             DataCipherText TEXT NOT NULL,\
             KeywordCipherText TEXT NOT NULL,\
             CONSTRAINT path_user_id_ref_to_user_table FOREIGN KEY (UserID) REFERENCES user_table (UserID)\
-        );",                          // (2) create path table
+        );",  // (2) create path table
         "CREATE TABLE shared_key_table (\
             SharedKeyID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
             PathID INTEGER NOT NULL UNIQUE,\
             SharedKeyCipherText TEXT NOT NULL,\
             CONSTRAINT path_id_ref_to_path_table FOREIGN KEY (PathID) REFERENCES path_table (PathID)\
-        );",                          // (3) create shared_key table
+        );",  // (3) create shared_key table
+        "CREATE TABLE content_table (\
+            ContentID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
+            SharedKeyHash TEXT NOT NULL,\
+            Nonce INTEGER NOT NULL,\
+            ContentCipherText TEXT NOT NULL\
+        );",  // (5) create content table
         /*"CREATE TABLE authorization_seed_table (\
             AuthorizationSeedID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
             PathID INTEGER NOT NULL UNIQUE,\
             AuthorizationSeedCipherText TEXT NOT NULL,\
-            CONSTRAINT path_id_ref_to_path_table FOREIGN KEY (PathID) REFERENCES path_table (PathID)\
-        );",                          // (4) create authorization_seed table */
+            CONSTRAINT path_id_ref_to_path_table FOREIGN KEY (PathID) REFERENCES
+        path_table (PathID)\
+        );",                          // (4) create authorization_seed table
         "CREATE TABLE content_table (\
             ContentID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
             SharedKeyHash TEXT NOT NULL,\
@@ -41,12 +48,14 @@ void InitalizeDatabase(SommelierDBMS *dbms) {
             Nonce INTEGER NOT NULL,\
             ContentCipherText TEXT NOT NULL\
         );",                          // (5) create content table
-        /*"CREATE TABLE write_permission_table (\
+        "CREATE TABLE write_permission_table (\
             WritePermissionID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
             PathID INTEGER NOT NULL UNIQUE,\
             UserID INTEGER NOT NULL,\
-            CONSTRAINT content_path_id_ref_to_path_table FOREIGN KEY (PathID) REFERENCES path_table (PathID),\
-            CONSTRAINT content_user_id_ref_to_user_table FOREIGN KEY (UserID) REFERENCES user_table (UserID)\
+            CONSTRAINT content_path_id_ref_to_path_table FOREIGN KEY (PathID)
+        REFERENCES path_table (PathID),\
+            CONSTRAINT content_user_id_ref_to_user_table FOREIGN KEY (UserID)
+        REFERENCES user_table (UserID)\
         );",                          // (6) create write_permission table */
         "PRAGMA foreign_keys=true;",  // (7) enable forign key
     };
@@ -344,19 +353,45 @@ AuthorizationSeed *ReadAuthorizationSeed(SommelierDBMS *dbms, uint64_t pid) {
 
 */
 
-Content *CreateContent(SommelierDBMS *dbms, char *skh, char *pka, char *ctc) {
+// Content *CreateContent(SommelierDBMS *dbms, char *skh, char *pka, char *ctc)
+// {
+//     char sql[MAX_SIZE_SQL_CREATE_CONTENT] = "";
+//     sprintf(sql,
+//             "INSERT INTO content_table (SharedKeyHash,
+//             AuthorizationPublicKey, " "Nonce, ContentCipherText) values
+//             ('%s', '%s', 1, '%s');", skh, pka, ctc);
+
+//     int rc = orm_execute_sql(sommelier_connection_with_insert(dbms), sql, 0,
+//     0);
+
+//     if (rc == SQLITE_OK) {
+//         uint64_t id = __last_inserted_id(dbms->db);
+//         Content *c = initialize_content();
+//         set_content(c, id, skh, pka, 1, ctc);
+
+//         if (DEBUG) {
+//             decode_json_content(c);
+//         }
+
+//         return c;
+//     } else {
+//         return NULL;
+//     }
+// }
+
+Content *CreateContent(SommelierDBMS *dbms, char *skh, char *ctc) {
     char sql[MAX_SIZE_SQL_CREATE_CONTENT] = "";
     sprintf(sql,
-            "INSERT INTO content_table (SharedKeyHash, AuthorizationPublicKey, "
-            "Nonce, ContentCipherText) values ('%s', '%s', 1, '%s');",
-            skh, pka, ctc);
+            "INSERT INTO content_table (SharedKeyHash, Nonce, "
+            "ContentCipherText) values ('%s', 1, '%s');",
+            skh, ctc);
 
     int rc = orm_execute_sql(sommelier_connection_with_insert(dbms), sql, 0, 0);
 
     if (rc == SQLITE_OK) {
         uint64_t id = __last_inserted_id(dbms->db);
         Content *c = initialize_content();
-        set_content(c, id, skh, pka, 1, ctc);
+        set_content(c, id, skh, 1, ctc);
 
         if (DEBUG) {
             decode_json_content(c);
@@ -370,8 +405,10 @@ Content *CreateContent(SommelierDBMS *dbms, char *skh, char *pka, char *ctc) {
 
 static int callback_set_content(void *c, int argc, char **argv,
                                 char **azColName) {
-    set_content((Content *)c, AS_U64(argv[0]), argv[1], argv[2],
-                AS_U64(argv[3]), argv[4]);
+    // set_content((Content *)c, AS_U64(argv[0]), argv[1], argv[2],
+    //             AS_U64(argv[3]), argv[4]);
+    set_content((Content *)c, AS_U64(argv[0]), argv[1], AS_U64(argv[2]),
+                argv[3]);
 
     if (DEBUG) {
         debug_content((Content *)c);
@@ -441,7 +478,9 @@ void IncrementContentNonce(SommelierDBMS *dbms, Content *c) {
 
 static int callback_content_row(void *vec, int argc, char **argv,
                                 char **azColName) {
-    Content c = {AS_U64(argv[0]), argv[1], argv[2], AS_U64(argv[3]), argv[4]};
+    // Content c = {AS_U64(argv[0]), argv[1], argv[2], AS_U64(argv[3]),
+    // argv[4]};
+    Content c = {AS_U64(argv[0]), argv[1], AS_U64(argv[2]), argv[3]};
 
     if (DEBUG) {
         debug_content(&c);

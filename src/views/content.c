@@ -19,7 +19,7 @@ json_t *post_api_content_request(struct mg_str s) {
 
     // sharedKeyHash: string, authorizationPK: string, ct: string
     int c = json_has_key(j, "sharedKeyHash", JSON_STRING) &&
-            json_has_key(j, "authorizationPK", JSON_STRING) &&
+            // json_has_key(j, "authorizationPK", JSON_STRING) &&
             json_has_key(j, "ct", JSON_STRING);
 
     if (c) {
@@ -96,11 +96,12 @@ void api_content_view(struct mg_connection *c, struct mg_http_message *hm,
         if (body != NULL) {
             char *skh = (char *)json_string_value(
                 json_object_get(body, "sharedKeyHash"));
-            char *apk = (char *)json_string_value(
-                json_object_get(body, "authorizationPK"));
+            // char *apk = (char *)json_string_value(
+            //     json_object_get(body, "authorizationPK"));
             char *ct = (char *)json_string_value(json_object_get(body, "ct"));
 
-            Content *con = CreateContent(db, skh, apk, ct);
+            // Content *con = CreateContent(db, skh, apk, ct);
+            Content *con = CreateContent(db, skh, ct);
 
             if (con != NULL) {
                 mg_http_reply(c, 200, "", "%d", con->id);

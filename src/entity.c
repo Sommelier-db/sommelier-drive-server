@@ -424,13 +424,13 @@ Content *initialize_content() {
     if (DEBUG) {
         c->shared_key_hash =
             alloc_string_debug(MAX_SIZE_HASH, "Content::shared_key_hash");
-        c->authorization_public_key = alloc_string_debug(
-            MAX_SIZE_PKE_KEY, "Content::authorization_public_key");
+        // c->authorization_public_key = alloc_string_debug(
+        //     MAX_SIZE_PKE_KEY, "Content::authorization_public_key");
         c->content_cipher_text = alloc_string_debug(
             MAX_SIZE_PKSE_CONTENT_CT, "Content::content_cipher_text");
     } else {
         c->shared_key_hash = alloc_string(MAX_SIZE_HASH);
-        c->authorization_public_key = alloc_string(MAX_SIZE_PKE_KEY);
+        // c->authorization_public_key = alloc_string(MAX_SIZE_PKE_KEY);
         c->content_cipher_text = alloc_string(MAX_SIZE_PKSE_CONTENT_CT);
     }
 
@@ -439,19 +439,28 @@ Content *initialize_content() {
 
 void finalize_content(Content *content) {
     free(content->shared_key_hash);
-    free(content->authorization_public_key);
+    // free(content->authorization_public_key);
     free(content->content_cipher_text);
     free(content);
 }
 
-void set_content(Content *c, uint64_t id, const char *skh, const char *pka,
-                 uint64_t nonce, const char *ctc) {
+void set_content(Content *c, uint64_t id, const char *skh, uint64_t nonce,
+                 const char *ctc) {
     set_content_id(c, id);
     set_content_shared_key_hash(c, skh);
-    set_content_authorization_public_key(c, pka);
+    // set_content_authorization_public_key(c, pka);
     set_content_nonce(c, nonce);
     set_content_content_cipher_text(c, ctc);
 }
+
+// void set_content(Content *c, uint64_t id, const char *skh, const char *pka,
+//                  uint64_t nonce, const char *ctc) {
+//     set_content_id(c, id);
+//     set_content_shared_key_hash(c, skh);
+//     set_content_authorization_public_key(c, pka);
+//     set_content_nonce(c, nonce);
+//     set_content_content_cipher_text(c, ctc);
+// }
 
 void set_content_id(Content *c, uint64_t id) { c->id = id; }
 
@@ -463,6 +472,9 @@ void set_content_shared_key_hash(Content *c, const char *skh) {
     }
 }
 
+/*
+// deprecate: Content::authorization_public_key
+
 void set_content_authorization_public_key(Content *c, const char *pka) {
     if (pka != NULL) {
         c->authorization_public_key =
@@ -472,6 +484,7 @@ void set_content_authorization_public_key(Content *c, const char *pka) {
             "Arg pka is NULL. - set_content_authorization_public_key");
     }
 }
+*/
 
 void set_content_nonce(Content *c, uint64_t nonce) { c->nonce = nonce; }
 
@@ -499,12 +512,12 @@ json_t *decode_json_content(Content *c) {
         exit(1);
     }
 
-    if (json_object_set(json, "authorizationPK",
-                        json_string(c->authorization_public_key)) < 0) {
-        logging_error(
-            "Setting JSON is failed. - Content::authorization_public_key");
-        exit(1);
-    }
+    // if (json_object_set(json, "authorizationPK",
+    //                     json_string(c->authorization_public_key)) < 0) {
+    //     logging_error(
+    //         "Setting JSON is failed. - Content::authorization_public_key");
+    //     exit(1);
+    // }
 
     if (json_object_set(json, "nonce", json_integer(c->nonce)) < 0) {
         logging_error("Setting JSON is failed. - Content::nonce");
@@ -558,9 +571,11 @@ size_t push_content_vector(ContentVector *vec, Content *content) {
 
     vec->buf[vec->length] = initialize_content();
 
+    // set_content(vec->buf[vec->length], content->id, content->shared_key_hash,
+    //             content->authorization_public_key, content->nonce,
+    //             content->content_cipher_text);
     set_content(vec->buf[vec->length], content->id, content->shared_key_hash,
-                content->authorization_public_key, content->nonce,
-                content->content_cipher_text);
+                content->nonce, content->content_cipher_text);
 
     return ++vec->length;
 }
@@ -762,7 +777,6 @@ void debug_authorization_seed(AuthorizationSeed *as) {
     }
 }
 */
-
 
 void debug_path_vector(PathVector *);
 
