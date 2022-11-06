@@ -48,11 +48,16 @@ SharedKey *CreateSharedKey(SommelierDBMS *, uint64_t, char *);
 
 SharedKey *ReadSharedKey(SommelierDBMS *, uint64_t);
 
+/*
+// deprecate: AuthorizationSeed
+
 AuthorizationSeed *CreateAuthorizationSeed(SommelierDBMS *, uint64_t, char *);
 
 AuthorizationSeed *ReadAuthorizationSeed(SommelierDBMS *, uint64_t);
+*/
 
-Content *CreateContent(SommelierDBMS *, char *, char *, char *);
+// Content *CreateContent(SommelierDBMS *, char *, char *, char *);
+Content *CreateContent(SommelierDBMS *, char *, char *);
 
 Content *ReadContent(SommelierDBMS *, uint64_t);
 
@@ -64,6 +69,10 @@ void IncrementContentNonce(SommelierDBMS *, Content *);
 
 ContentVector *FilterBySharedKeyHash(SommelierDBMS *, char *);
 
+/*
+// deprecate: WritePermission
+
 WritePermission *CreateWritePermission(SommelierDBMS *, uint64_t, uint64_t);
 
 WritePermission *ReadWritePermission(SommelierDBMS *, uint64_t);
+*/

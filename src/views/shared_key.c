@@ -21,8 +21,8 @@ json_t *post_api_shared_key_request(struct mg_str s) {
     json_t *j = json_loads(s.ptr, 0, &err);
 
     // writeUserId: int, pathId: int, ct: string
-    int c = json_has_key(j, "writeUserId", JSON_INTEGER) &&
-            json_has_key(j, "pathId", JSON_INTEGER) &&
+    // int c = json_has_key(j, "writeUserId", JSON_INTEGER) &&
+    int c = json_has_key(j, "pathId", JSON_INTEGER) &&
             json_has_key(j, "ct", JSON_STRING);
 
     if (c) {
@@ -84,7 +84,7 @@ void api_shared_key_view(struct mg_connection *c, struct mg_http_message *hm,
             logging_http_body(hm);
         }
 
-        if (body != NULL) {
+        /* if (body != NULL) {
             uint64_t writeUserId = (uint64_t)json_integer_value(
                 json_object_get(body, "writeUserId"));
             uint64_t pathId =
@@ -108,6 +108,24 @@ void api_shared_key_view(struct mg_connection *c, struct mg_http_message *hm,
                 }
 
                 finalize_user(writeUser);
+            } else {
+                __ERROR_REPLY(c);
+            }
+
+            free(body);
+        } */
+
+        if (body != NULL) {
+            uint64_t pathId =
+                (uint64_t)json_integer_value(json_object_get(body, "pathId"));
+            char *ct = (char *)json_string_value(json_object_get(body, "ct"));
+
+            SharedKey *sk = CreateSharedKey(db, pathId, ct);
+
+            if (sk != NULL) {
+                mg_http_reply(c, 200, "", "%d", sk->id);
+
+                finalize_shared_key(sk);
             } else {
                 __ERROR_REPLY(c);
             }

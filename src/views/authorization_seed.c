@@ -1,5 +1,6 @@
 #include "views/authorization_seed.h"
 
+/* deprecate
 json_t *get_api_authorization_seed_request(struct mg_str s) {
     json_error_t err;
     json_t *j = json_loads(s.ptr, 0, &err);
@@ -107,3 +108,4 @@ void api_authorization_seed_view(struct mg_connection *c,
 
     free(method);
 }
+*/

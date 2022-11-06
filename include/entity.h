@@ -65,6 +65,9 @@ void set_shared_key_path_id(SharedKey *, uint64_t);
 void set_shared_key_share_key_cipher_text(SharedKey *, const char *);
 json_t *decode_json_shared_key(SharedKey *);
 
+/*
+// deprecate: AuthorizationSeed
+
 typedef struct authorization_seed_table_row {
     uint64_t id;
     uint64_t path_id;
@@ -80,26 +83,31 @@ void set_authorization_seed_path_id(AuthorizationSeed *, uint64_t);
 void set_authorization_seed_authorization_seed_cipher_text(AuthorizationSeed *,
                                                            const char *);
 json_t *decode_json_authorization_seed(AuthorizationSeed *);
+*/
 
 typedef struct content_table_row {
     uint64_t id;
     char *shared_key_hash;
-    char *authorization_public_key;
+    // char *authorization_public_key;
     uint64_t nonce;
     char *content_cipher_text;
 } Content;
 
 Content *initialize_content();
 void finalize_content(Content *);
-void set_content(Content *, uint64_t, const char *, const char *, uint64_t,
-                 const char *);
+void set_content(Content *, uint64_t, const char *, uint64_t, const char *);
+// void set_content(Content *, uint64_t, const char *, const char *, uint64_t,
+//                  const char *);
 void set_content_id(Content *, uint64_t);
 void set_content_shared_key_hash(Content *, const char *);
-void set_content_authorization_public_key(Content *, const char *);
+// void set_content_authorization_public_key(Content *, const char *);
 void set_content_nonce(Content *, uint64_t);
 void set_content_content_cipher_text(Content *, const char *);
 uint64_t increment_content_nonce(Content *);
 json_t *decode_json_content(Content *);
+
+/*
+// deprecate: WritePermission
 
 typedef struct write_permission_table_row {
     uint64_t id;
@@ -114,6 +122,7 @@ void set_write_permission_id(WritePermission *, uint64_t);
 void set_write_permission_path_id(WritePermission *, uint64_t);
 void set_write_permission_user_id(WritePermission *, uint64_t);
 json_t *decode_json_write_permission(WritePermission *);
+*/
 
 typedef struct path_table_vector {
     size_t max_size;
@@ -142,8 +151,8 @@ json_t *decode_json_content_vector(ContentVector *);
 void debug_user(User *);
 void debug_path(Path *);
 void debug_shared_key(SharedKey *);
-void debug_authorization_seed(AuthorizationSeed *);
+// void debug_authorization_seed(AuthorizationSeed *);
 void debug_content(Content *);
-void debug_write_permission(WritePermission *);
+// void debug_write_permission(WritePermission *);
 void debug_path_vector(PathVector *);
 void debug_content_vector(ContentVector *);

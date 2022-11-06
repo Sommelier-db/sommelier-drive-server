@@ -68,10 +68,10 @@ int main(void) {
     push_new_route(router, "/api/file-path/search", api_path_search_view);
     push_new_route(router, "/api/file-path", api_path_view);
     push_new_route(router, "/api/shared-key", api_shared_key_view);
-    push_new_route(router, "/api/authorization-seed",
-                   api_authorization_seed_view);
+    // push_new_route(router, "/api/authorization-seed",
+    //                api_authorization_seed_view);
     push_new_route(router, "/api/contents", api_content_view);
-    push_new_route(router, "/api/write-permission", api_write_permission_view);
+    // push_new_route(router, "/api/write-permission", api_write_permission_view);
 
     // Set log level
     mg_log_set(VERBOSE ? MG_LL_VERBOSE : (DEBUG ? MG_LL_DEBUG : MG_LL_INFO));

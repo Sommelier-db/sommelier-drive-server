@@ -109,17 +109,18 @@ void api_user_view(struct mg_connection *c, struct mg_http_message *hm,
                 Path *p = CreatePath(db, u->id, ph, dct, kct);
 
                 if (p != NULL) {
-                    WritePermission *wp =
-                        CreateWritePermission(db, p->id, u->id);
+                    // WritePermission *wp =
+                    //     CreateWritePermission(db, p->id, u->id);
 
-                    if (wp != NULL) {
-                        mg_http_reply(c, 200, "", "%d", u->id);
+                    // if (wp != NULL) {
+                    //     mg_http_reply(c, 200, "", "%d", u->id);
 
-                        finalize_write_permission(wp);
-                    } else {
-                        __ERROR_REPLY(c);
-                    }
+                    //     finalize_write_permission(wp);
+                    // } else {
+                    //     __ERROR_REPLY(c);
+                    // }
 
+                    mg_http_reply(c, 200, "", "%d", u->id);
                     finalize_path(p);
                 } else {
                     __ERROR_REPLY(c);

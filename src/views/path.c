@@ -21,8 +21,8 @@ json_t *post_api_path_request(struct mg_str s) {
 
     // writeUserId: int, readUserId: int, permissionHash: string,
     // dataCT: string, keywordCT: string
-    int c = json_has_key(j, "writeUserId", JSON_INTEGER) &&
-            json_has_key(j, "readUserId", JSON_INTEGER) &&
+    // int c = json_has_key(j, "writeUserId", JSON_INTEGER) &&
+    int c = json_has_key(j, "readUserId", JSON_INTEGER) &&
             json_has_key(j, "permissionHash", JSON_STRING) &&
             json_has_key(j, "dataCT", JSON_STRING) &&
             json_has_key(j, "keywordCT", JSON_STRING);
@@ -85,7 +85,7 @@ void api_path_view(struct mg_connection *c, struct mg_http_message *hm,
             logging_http_body(hm);
         }
 
-        if (body != NULL) {
+        /* if (body != NULL) {
             uint64_t writeUserId = (uint64_t)json_integer_value(
                 json_object_get(body, "writeUserId"));
             uint64_t readUserId = (uint64_t)json_integer_value(
@@ -115,6 +115,30 @@ void api_path_view(struct mg_connection *c, struct mg_http_message *hm,
                 }
 
                 finalize_user(writeUser);
+            } else {
+                __ERROR_REPLY(c);
+            }
+
+            free(body);
+        } */
+
+        if (body != NULL) {
+            uint64_t readUserId = (uint64_t)json_integer_value(
+                json_object_get(body, "readUserId"));
+            char *permissionHash = (char *)json_string_value(
+                json_object_get(body, "permissionHash"));
+            char *dataCT =
+                (char *)json_string_value(json_object_get(body, "dataCT"));
+            char *keywordCT =
+                (char *)json_string_value(json_object_get(body, "keywordCT"));
+
+            Path *p =
+                CreatePath(db, readUserId, permissionHash, dataCT, keywordCT);
+
+            if (p != NULL) {
+                mg_http_reply(c, 200, "", "%d", p->id);
+
+                finalize_path(p);
             } else {
                 __ERROR_REPLY(c);
             }
