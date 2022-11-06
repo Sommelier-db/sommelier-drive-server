@@ -420,7 +420,7 @@ static int callback_set_content(void *c, int argc, char **argv,
 Content *ReadContent(SommelierDBMS *dbms, uint64_t id) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
-            "SELECT ContentID, SharedKeyHash, AuthorizationPublicKey, Nonce, "
+            "SELECT ContentID, SharedKeyHash, Nonce, "
             "ContentCipherText FROM content_table WHERE ContentID = %ld;",
             id);
 
@@ -440,7 +440,7 @@ Content *ReadContent(SommelierDBMS *dbms, uint64_t id) {
 Content *ReadContentBySharedKeyHash(SommelierDBMS *dbms, char *skh) {
     char sql[MAX_SIZE_SQL_READ_BY_ID] = "";
     sprintf(sql,
-            "SELECT ContentID, SharedKeyHash, AuthorizationPublicKey, Nonce, "
+            "SELECT ContentID, SharedKeyHash, Nonce, "
             "ContentCipherText FROM content_table WHERE SharedKeyHash = '%s';",
             skh);
 
@@ -494,7 +494,7 @@ static int callback_content_row(void *vec, int argc, char **argv,
 ContentVector *FilterBySharedKeyHash(SommelierDBMS *dbms, char *skh) {
     char sql[MAX_SIZE_SQL_CREATE_WRITE_PERMISSION] = "";
     sprintf(sql,
-            "SELECT ContentID, SharedKeyHash, AuthorizationPublicKey, Nonce,  "
+            "SELECT ContentID, SharedKeyHash, Nonce,  "
             "ContentCipherText FROM content_table WHERE SharedKeyHash = '%s';",
             skh);
 
